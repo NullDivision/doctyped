@@ -1,0 +1,12 @@
+// @flow
+
+<% if (refs.length) { -%>
+<% refs.forEach(function(ref) { %>import <%= ref %> from './<%= ref %>';
+<% }); -%>
+<% } -%>
+
+export type <%= modelName %> = {
+<% Object.keys(modelSchema).forEach(function(key) { -%>
+  <%= key %>: <% if (!modelSchema[key].required) { -%>?<% } -%><%- modelSchema[key].type %>;
+<% }); -%>
+};

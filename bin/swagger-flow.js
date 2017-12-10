@@ -13,38 +13,43 @@ const fixUnhandledTypes = (type) => {
   return type;
 };
 
-const getSchema = (definitions) =>
-  Object
-    .entries(definitions)
+const reduceEntry = (acc, [key, value]) => {
+  const { properties, required = [] } = value;
+  const entries = Object.entries(properties);
+  const _refs = entries
+    .map(([, value]) => value)
+    .filter(({ $ref, items }) => $ref || (items && '$ref' in items))
+    .map(({ $ref, items }) =>
+      $ref ? $ref.replace('#/definitions/', '') : items.$ref.replace('#/definitions/', '')
+    );
+  const _additionalTypes = entries
     .reduce(
-      (acc, [key, value]) => {
-        const { properties, required = [] } = value;
-        const _refs = Object
-          .values(properties)
-          .filter(({ $ref, items }) => $ref || (items && '$ref' in items))
-          .map(({ $ref, items }) =>
-            $ref ? $ref.replace('#/definitions/', '') : items.$ref.replace('#/definitions/', '')
-          );
-
-        return {
-          ...acc,
-          [key]: Object
-            .entries(properties)
-            .reduce(
-              (acc, [propKey, propValue]) => {
-                const { type, ...rest } = propValue;
-
-                return {
-                  ...acc,
-                  [propKey]: { required: required.includes(propKey), type: fixUnhandledTypes(type), ...rest }
-                };
-              },
-              { _refs }
-            )
-        };
-      },
+      (acc, [key, value]) =>
+        value.enum ? { ...acc, [key]: value.enum.map((enumVal) => `'${enumVal}'`).join('|') } : acc,
       {}
     );
+
+  return {
+    ...acc,
+    [key]: Object
+      .entries(properties)
+      .reduce(
+        (acc, [propKey, propValue]) => {
+          const { type, ...rest } = propValue;
+
+          return {
+            ...acc,
+            [propKey]: { required: required.includes(propKey), type: fixUnhandledTypes(type), ...rest }
+          };
+        },
+        { _additionalTypes, _refs }
+      )
+  };
+};
+
+const getFlowCongifs = (entries) => entries.reduce(reduceEntry, {});
+
+const getSchema = (definitions) => getFlowCongifs(Object.entries(definitions));
 
 readFile(argv._[0], (err, data) => {
   const schema = getSchema(JSON.parse(data.toString()).definitions);
@@ -52,12 +57,14 @@ readFile(argv._[0], (err, data) => {
   jsonToFlow(
     schema,
     {
-      preTemplateFn: ({ modelSchema: { _refs, ...modelSchema }, ...data }) => ({ modelSchema, refs: _refs, ...data }),
+      preTemplateFn: ({ modelSchema: { _additionalTypes, _refs, ...modelSchema }, ...data }) =>
+        console.log( _additionalTypes ) ||
+        ({ additionalTypes: _additionalTypes, modelSchema, refs: _refs, ...data }),
       targetPath: join(__dirname, '../tmp'),
       templateData: { modelSuperClass: null },
       templatePath: string = join(__dirname, '../src/template.ejs')
     },
-    console.log
+    () => console.log('Done')
   );
 });
 

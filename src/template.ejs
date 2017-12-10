@@ -1,7 +1,12 @@
 // @flow
-
 <% if (refs.length) { -%>
+
 <% refs.forEach(function(ref) { %>import <%= ref %> from './<%= ref %>';
+<% }); -%>
+<% } -%>
+<% if (refs.length) { -%>
+<% Object.keys(additionalTypes).forEach(function(value, key) { -%>
+export type <%= key %> = <%- value %>;
 <% }); -%>
 <% } -%>
 

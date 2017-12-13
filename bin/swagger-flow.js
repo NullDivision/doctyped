@@ -5,9 +5,13 @@ const join = require('path').join;
 const jsonToFlow = require('json-to-flow');
 const readFile = require('fs').readFile;
 
-const fixUnhandledTypes = (type) => {
+const getTypeValue = (type, list) => {
   if (type === 'integer') {
     return 'number';
+  }
+
+  if (list) {
+    return list.map((value) => `'${value}'`).join('|');
   }
 
   return type;
@@ -22,12 +26,6 @@ const reduceEntry = (acc, [key, value]) => {
     .map(({ $ref, items }) =>
       $ref ? $ref.replace('#/definitions/', '') : items.$ref.replace('#/definitions/', '')
     );
-  const _additionalTypes = entries
-    .reduce(
-      (acc, [key, value]) =>
-        value.enum ? { ...acc, [key]: value.enum.map((enumVal) => `'${enumVal}'`).join('|') } : acc,
-      {}
-    );
 
   return {
     ...acc,
@@ -35,14 +33,14 @@ const reduceEntry = (acc, [key, value]) => {
       .entries(properties)
       .reduce(
         (acc, [propKey, propValue]) => {
-          const { type, ...rest } = propValue;
+          const { enum: list, type, ...rest } = propValue;
 
           return {
             ...acc,
-            [propKey]: { required: required.includes(propKey), type: fixUnhandledTypes(type), ...rest }
+            [propKey]: { required: required.includes(propKey), type: getTypeValue(type, list), ...rest }
           };
         },
-        { _additionalTypes, _refs }
+        { _refs }
       )
   };
 };
@@ -58,10 +56,8 @@ readFile(argv._[0], (err, data) => {
     schema,
     {
       preTemplateFn: ({ modelSchema: { _additionalTypes, _refs, ...modelSchema }, ...data }) =>
-        console.log( _additionalTypes ) ||
-        ({ additionalTypes: _additionalTypes, modelSchema, refs: _refs, ...data }),
+        ({ modelSchema, refs: _refs, ...data }),
       targetPath: join(__dirname, '../tmp'),
-      templateData: { modelSuperClass: null },
       templatePath: string = join(__dirname, '../src/template.ejs')
     },
     () => console.log('Done')

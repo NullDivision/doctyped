@@ -1,11 +1,11 @@
-# swagger-flow
+# doctyped
 
 ## Description
 
-A tool created to allow auto-generation of flow types from swagger API descriptions.
+A tool created allowing auto-generation of flow types from API documentation descriptions.
 
 ## Usage
 
 ```
-swagger-flow /path/to/descriptor.json
+doctyped /path/to/descriptor.json
 ```

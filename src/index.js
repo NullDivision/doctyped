@@ -4,6 +4,7 @@ const argv = require('yargs-parser')(process.argv.slice(2));
 const join = require('path').join;
 const jsonToFlow = require('json-to-flow');
 const readFile = require('fs').readFile;
+const http = require('http');
 
 const getTypeValue = (type, list) => {
   if (type === 'integer') {
@@ -49,7 +50,21 @@ const getFlowCongifs = (entries) => entries.reduce(reduceEntry, {});
 
 const getSchema = (definitions) => getFlowCongifs(Object.entries(definitions));
 
+const getContent = (url) => new Promise((resolve, reject) => {
+  readFile(url, (err, data) => {
+    if (err) {}
+
+    resolve(data.toString());
+  });
+});
+
+console.log(getContent(argv._[0]));
+
 readFile(argv._[0], (err, data) => {
+  if (err) {
+    console.log(request);
+  }
+
   const schema = getSchema(JSON.parse(data.toString()).definitions);
 
   jsonToFlow(

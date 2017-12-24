@@ -27,7 +27,7 @@ opt@^0.1.14:
   resolved "https://registry.yarnpkg.com/opt/-/opt-0.1.14.tgz#03f9ff4567587961d5985a5e9c983833122934af"
 
 yargs-parser@^8.0.0:
-  version "8.0.0"
-  resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-8.0.0.tgz#21d476330e5a82279a4b881345bf066102e219c6"
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-8.1.0.tgz#f1376a33b6629a5d063782944da732631e966950"
   dependencies:
     camelcase "^4.1.0"

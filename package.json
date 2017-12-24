@@ -1,6 +1,6 @@
 {
   "bin": {
-    "swagger-flow": "bin/swagger-flow.js"
+    "doctyped": "src/index.js"
   },
   "name": "@nulldivision/swagger-flow",
   "version": "0.1.0",

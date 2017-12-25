@@ -12,6 +12,6 @@ require('yargs')
     '$0 <file>',
     'parse descriptor',
     (yargs) => yargs.positional('file', { describe: 'file or url', type: 'string' }),
-    ({ file }) => require('./parser')(file)
+    ({ file }) => require('./doctyped')(file)
   )
   .argv;

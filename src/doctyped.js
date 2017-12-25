@@ -15,6 +15,8 @@ const getTypeValue = (type, list) => {
 };
 
 const reduceEntry = (acc, [key, value]) => {
+  if (key === 'User') console.log(value);
+
   const { properties, required = [] } = value;
   const entries = Object.entries(properties);
   const _refs = entries
@@ -46,19 +48,51 @@ const getFlowCongifs = (entries) => entries.reduce(reduceEntry, {});
 
 const getSchema = (definitions) => getFlowCongifs(Object.entries(definitions));
 
-module.exports = (url) => {
-  fs.readFile(url, (err, data) => {
-    const schema = getSchema(JSON.parse(data.toString()).definitions);
+const getRemoteDescriptor = (url) => {
+  const client = url.startsWith('https') ? 'https' : 'http';
 
-    jsonToFlow(
-      schema,
-      {
-        preTemplateFn: ({ modelSchema: { _additionalTypes, _refs, ...modelSchema }, ...data }) =>
-          ({ modelSchema, refs: _refs, ...data }),
-        targetPath: path.join(__dirname, '../tmp'),
-        templatePath: string = path.join(__dirname, '../src/template.ejs')
-      },
-      () => console.log('Done')
-    );
+  return new Promise((resolve, reject) => {
+    require(client).get(url, (response) => {
+      let rawData = '';
+
+      response.on('data', (chunk) => {
+        rawData += chunk;
+      });
+
+      response.on('end', () => resolve(JSON.parse(rawData)));
+    });
   });
+};
+
+const getDescriptor = (url) => new Promise((resolve, reject) => {
+  fs.readFile(url, async (err, data) => {
+    try {
+      resolve(JSON.parse(data.toString()));
+    } catch (e) {
+      reject(e);
+    }
+  });
+});
+
+module.exports = async (url) => {
+  let descriptor;
+
+  try {
+    descriptor = await getDescriptor(url);
+  } catch (e) {
+    descriptor = await getRemoteDescriptor(url);
+  }
+
+  const schema = getSchema(descriptor.definitions);
+
+  jsonToFlow(
+    schema,
+    {
+      preTemplateFn: ({ modelSchema: { _additionalTypes, _refs, ...modelSchema }, ...data }) =>
+        ({ modelSchema, refs: _refs, ...data }),
+      targetPath: path.join(__dirname, '../tmp'),
+      templatePath: string = path.join(__dirname, '../src/template.ejs')
+    },
+    () => console.log('Done')
+  );
 };

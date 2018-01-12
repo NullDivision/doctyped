@@ -15,8 +15,6 @@ const getTypeValue = (type, list) => {
 };
 
 const reduceEntry = (acc, [key, value]) => {
-  if (key === 'User') console.log(value);
-
   const { properties, required = [] } = value;
   const entries = Object.entries(properties);
   const _refs = entries
@@ -90,8 +88,8 @@ module.exports = async (url) => {
     {
       preTemplateFn: ({ modelSchema: { _additionalTypes, _refs, ...modelSchema }, ...data }) =>
         ({ modelSchema, refs: _refs, ...data }),
-      targetPath: path.join(__dirname, '../tmp'),
-      templatePath: string = path.join(__dirname, '../src/template.ejs')
+      targetPath: path.join(process.cwd(), 'tmp'),
+      templatePath: path.join(__dirname, '../src/template.ejs')
     },
     () => console.log('Done')
   );

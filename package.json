@@ -2,8 +2,8 @@
   "bin": {
     "doctyped": "src/index.js"
   },
-  "name": "@nulldivision/swagger-flow",
-  "version": "0.1.0",
+  "name": "doctyped",
+  "version": "0.2.0",
   "description": "Swagger-enabled flow types generator",
   "main": "index.js",
   "directories": {
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/NullDivision/swagger-flow.git"
+    "url": "git+https://github.com/NullDivision/doctyped.git"
   },
   "keywords": [
     "swagger",
@@ -24,9 +24,9 @@
   "author": "NullDivision",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/NullDivision/swagger-flow/issues"
+    "url": "https://github.com/NullDivision/doctyped/issues"
   },
-  "homepage": "https://github.com/NullDivision/swagger-flow#readme",
+  "homepage": "https://github.com/NullDivision/doctyped#readme",
   "dependencies": {
     "json-to-flow": "^0.3.1",
     "yargs": "^10.0.3"

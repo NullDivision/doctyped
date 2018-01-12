@@ -1,6 +1,6 @@
 // @flow
 
-<% refs.forEach(function(ref) { %>import { <%= ref %> } from './<%= ref %>';
+<% refs.forEach(function(ref) { %>import type { <%= ref %> } from './<%= ref %>';
 <% }); -%>
 <% if (Object.keys(additionalTypes).length) { %>
 

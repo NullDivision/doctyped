@@ -22,7 +22,8 @@ const reduceEntry = (acc, [key, value]) => {
     .filter(({ $ref, items }) => $ref || (items && '$ref' in items))
     .map(({ $ref, items }) =>
       $ref ? $ref.replace('#/definitions/', '') : items.$ref.replace('#/definitions/', '')
-    );
+    )
+    .reduce((acc, ref) => acc.includes(ref) ? acc : [...acc, ref], []);
 
   return {
     ...acc,
@@ -82,6 +83,11 @@ module.exports = async (url) => {
   }
 
   const schema = getSchema(descriptor.definitions);
+  const outputDir = path.resolve(process.cwd(), 'tmp');
+
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir);
+  }
 
   jsonToFlow(
     schema,

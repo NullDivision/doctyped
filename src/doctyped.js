@@ -2,6 +2,8 @@ const fs = require('fs');
 const jsonToFlow = require('json-to-flow');
 const path = require('path');
 
+const DEFAULT_OPTS = { output: path.resolve(process.cwd(), 'tmp') };
+
 const getTypeValue = (type, list) => {
   if (type === 'integer') {
     return 'number';
@@ -66,27 +68,34 @@ const getRemoteDescriptor = (url) => {
 const getDescriptor = (url) => new Promise((resolve, reject) => {
   fs.readFile(url, async (err, data) => {
     try {
+      if (!data) {
+        throw err;
+      }
+
       resolve(JSON.parse(data.toString()));
     } catch (e) {
-      reject(e);
+      console.log(e.message);
+      reject(new Error('Could not resolve path locally'));
     }
   });
 });
 
-module.exports = async (url) => {
+module.exports = async (url, options) => {
+  const opts = { ...DEFAULT_OPTS, ...options };
+
   let descriptor;
 
   try {
     descriptor = await getDescriptor(url);
   } catch (e) {
+    console.log(e.message);
     descriptor = await getRemoteDescriptor(url);
   }
 
   const schema = getSchema(descriptor.definitions);
-  const outputDir = path.resolve(process.cwd(), 'tmp');
 
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir);
+  if (!fs.existsSync(opts.output)) {
+    fs.mkdirSync(opts.output);
   }
 
   jsonToFlow(
@@ -94,7 +103,7 @@ module.exports = async (url) => {
     {
       preTemplateFn: ({ modelSchema: { _additionalTypes, _refs, ...modelSchema }, ...data }) =>
         ({ modelSchema, refs: _refs, ...data }),
-      targetPath: path.join(process.cwd(), 'tmp'),
+      targetPath: opts.output,
       templatePath: path.join(__dirname, '../src/template.ejs')
     },
     () => console.log('Done')

@@ -8,10 +8,12 @@ require('yargs')
   // version
   .version(require('../package.json').version)
   .alias('version', 'v')
+  .option('output', { alias: 'o' })
+  .describe('output', 'Destination directory')
   .command(
     '$0 <file>',
     'parse descriptor',
     (yargs) => yargs.positional('file', { describe: 'file or url', type: 'string' }),
-    ({ file }) => require('./doctyped')(file)
+    ({ file, ...opts }) => require('./doctyped')(file, opts)
   )
   .argv;

@@ -10,6 +10,7 @@
     "test": "test"
   },
   "scripts": {
+    "pretest": "rm -rf ./tmp/*",
     "test": "ava"
   },
   "repository": {
@@ -32,6 +33,8 @@
     "yargs": "^10.0.3"
   },
   "devDependencies": {
-    "ava": "^0.25.0"
+    "ava": "^0.25.0",
+    "flow-parser": "^0.68.0",
+    "sinon": "^4.4.8"
   }
 }

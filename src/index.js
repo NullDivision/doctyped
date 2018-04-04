@@ -1,6 +1,10 @@
 #! /usr/bin/env node
 
-require('yargs')
+import yargs from 'yargs';
+
+import doctyped from './doctyped';
+
+yargs
   .usage('Usage: $0 /path/to/descriptor')
   // help
   .help()
@@ -14,6 +18,6 @@ require('yargs')
     '$0 <file>',
     'parse descriptor',
     (yargs) => yargs.positional('file', { describe: 'file or url', type: 'string' }),
-    ({ file, ...opts }) => require('./doctyped')(file, opts)
+    ({ file, ...opts }) => doctyped(file, opts)
   )
   .argv;

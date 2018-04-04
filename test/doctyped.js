@@ -13,10 +13,10 @@ test('generates models', async (t) => {
   sinon.stub(process, 'cwd');
 
   const modelNames = Object.keys(descriptor.definitions);
+  const models = await doctyped(path.resolve(__dirname, '__mocks__/swagger.json'));
 
-  await doctyped(path.resolve(__dirname, '__mocks__/swagger.json'));
-
-  modelNames.forEach((model) => t.truthy(fs.existsSync(`${TEST_PATH_BASE}/${model}.js.flow`)));
+  t.truthy(models.length);
+  modelNames.forEach((model) => t.truthy(models.find(({ name }) => model === name)));
 });
 
 test('accepts output directory', async (t) => {
@@ -28,6 +28,7 @@ test('accepts output directory', async (t) => {
 
   modelNames.forEach((model) => t.falsy(fs.existsSync(`${TEST_PATH}/${model}.js.flow`)));
 
+  fs.mkdirSync(TEST_PATH);
   await doctyped(path.resolve(__dirname, '__mocks__/swagger.json'), { output: TEST_PATH });
 
   modelNames.forEach((model) => t.truthy(fs.existsSync(`${TEST_PATH}/${model}.js.flow`)));
@@ -36,38 +37,45 @@ test('accepts output directory', async (t) => {
 test.cb('generates flow type', (t) => {
   const TEST_PATH = path.resolve(TEST_PATH_BASE, 'flow');
 
-  doctyped(path.resolve(__dirname, '__mocks__/swagger.json'), { output: TEST_PATH }).then(() => {
-    fs.readFile(`${TEST_PATH}/Order.js.flow`, (err, response) => {
-      const { body: [body], comments: [{ value }] } = flowParser.parse(response.toString());
-      const { declaration: { id: { name }, right: { properties } }, type } = body;
-      const matchOpts = {
-        id: { annotation: 'NumberTypeAnnotation', type: 'NullableTypeAnnotation' },
-        petId: { annotation: 'NumberTypeAnnotation', type: 'NullableTypeAnnotation' },
-        quantity: { annotation: 'NumberTypeAnnotation', type: 'NullableTypeAnnotation' },
-        shipDate: { annotation: 'GenericTypeAnnotation', type: 'NullableTypeAnnotation' },
-        status: { length: 3, type: 'UnionTypeAnnotation' },
-        complete: { annotation: 'BooleanTypeAnnotation', type: 'NullableTypeAnnotation' }
-      };
+  fs.mkdirSync(TEST_PATH);
+  doctyped(path.resolve(__dirname, '__mocks__/swagger.json'), { output: TEST_PATH })
+    .then(() => {
+      fs.readFile(`${TEST_PATH}/Order.js.flow`, (err, response) => {
+        const { body: [status, order], type, ...rest } = flowParser.parse(response.toString());
+        const { declaration, type: statusType, ...restStatus } = status;
+        t.end();
+      })
+    })
+    .catch((err) => t.log(err));
+});
 
-      t.truthy(value.includes('@flow'));
-      t.is(type, 'ExportNamedDeclaration');
-      t.is(name, 'Order');
-      t.is(properties.length, 6);
-      properties.forEach(({ key: { name }, value: { type, typeAnnotation, ...value } }) => {
-        const { [name]: match } = matchOpts;
-        t.is(type, match.type);
-        
-        switch(type) {
-          case 'NullableTypeAnnotation':
-            t.is(typeAnnotation.type, match.annotation);
-            return;
-          case 'UnionTypeAnnotation':
-            t.is(value.types.length, match.length);
-            return;
-          default:
-            throw new Error(`Unhandled type '${type}'`);
-        }
-      });
+test.cb('respects ref imports', (t) => {
+  const TEST_PATH = path.resolve(TEST_PATH_BASE, 'refTest');
+
+  fs.mkdirSync(TEST_PATH);
+  doctyped(path.resolve(__dirname, '__mocks__/swagger.json'), { output: TEST_PATH }).then(() => {
+    fs.readFile(`${TEST_PATH}/Pet.js.flow`, (err, response) => {
+      const { body } = flowParser.parse(response.toString());
+
+      t.is(
+        body
+          .filter(({ type }) => type === 'ExportNamedDeclaration')
+          .find(({ declaration: { id: { name } } }) => name === 'Pet')
+          .declaration
+          .right
+          .properties
+          .find(({ key: { name } }) => name === 'category')
+          .value
+          .typeAnnotation
+          .id
+          .name,
+        'Category'
+      );
+      t.truthy(
+        body
+          .filter(({ type }) => type === 'ImportDeclaration')
+          .find(({ source: { value } }) => value === './Category.js.flow')
+      );
       t.end();
     });
   });

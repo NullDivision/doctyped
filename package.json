@@ -1,4 +1,9 @@
 {
+  "ava": {
+    "require": [
+      "babel-register"
+    ]
+  },
   "bin": {
     "doctyped": "src/index.js"
   },
@@ -10,6 +15,7 @@
     "test": "test"
   },
   "scripts": {
+    "build": "babel src --out-dir dist --copy-files",
     "pretest": "rm -rf ./tmp/*",
     "test": "ava"
   },
@@ -29,12 +35,18 @@
   },
   "homepage": "https://github.com/NullDivision/doctyped#readme",
   "dependencies": {
-    "json-to-flow": "^0.3.1",
-    "yargs": "^10.0.3"
+    "ejs": "^2.5.8",
+    "yargs": "^11.0.0"
   },
   "devDependencies": {
     "ava": "^0.25.0",
-    "flow-parser": "^0.68.0",
-    "sinon": "^4.4.8"
+    "babel-cli": "^6.26.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-flow": "^6.23.0",
+    "babel-register": "^6.26.0",
+    "flow-bin": "^0.69.0",
+    "flow-parser": "^0.69.0",
+    "sinon": "^4.5.0"
   }
 }

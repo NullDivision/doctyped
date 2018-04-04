@@ -80,3 +80,28 @@ test.cb('respects ref imports', (t) => {
     });
   });
 });
+
+test.cb('resolves array types', (t) => {
+  const TEST_PATH = path.resolve(TEST_PATH_BASE, 'arrayTest');
+
+  fs.mkdirSync(TEST_PATH);
+  doctyped(path.resolve(__dirname, '__mocks__/swagger.json'), { output: TEST_PATH }).then(() => {
+    fs.readFile(`${TEST_PATH}/Pet.js.flow`, (err, response) => {
+      const property = flowParser
+        .parse(response.toString())
+        .body
+        .filter(({ type }) => type === 'ExportNamedDeclaration')
+        .find(({ declaration: { id: { name } } }) => name === 'Pet')
+        .declaration
+        .right
+        .properties
+        .find(({ key: { name } }) => name === 'photoUrls')
+        .value;
+
+      t.is(property.id.name, 'Array');
+      t.truthy(property.typeParameters.params.find(({ type }) => type === 'StringTypeAnnotation'));
+
+      t.end();
+    });
+  })
+});

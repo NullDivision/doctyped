@@ -32,51 +32,6 @@ function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in ob
 
 const DEFAULT_OPTS = { output: null };
 
-// const getTypeValue = (type, list) => {
-//   if (type === 'integer') {
-//     return 'number';
-//   }
-
-//   if (list) {
-//     return list.map((value) => `'${value}'`).join('|');
-//   }
-
-//   return type;
-// };
-
-// const reduceEntry = (acc, [key, value]) => {
-//   const { properties, required = [] } = value;
-//   const entries = Object.entries(properties);
-//   const _refs = entries
-//     .map(([, value]) => value)
-//     .filter(({ $ref, items }) => $ref || (items && '$ref' in items))
-//     .map(({ $ref, items }) =>
-//       $ref ? $ref.replace('#/definitions/', '') : items.$ref.replace('#/definitions/', '')
-//     )
-//     .reduce((acc, ref) => acc.includes(ref) ? acc : [...acc, ref], []);
-
-//   return {
-//     ...acc,
-//     [key]: Object
-//       .entries(properties)
-//       .reduce(
-//         (acc, [propKey, propValue]) => {
-//           const { enum: list, type, ...rest } = propValue;
-
-//           return {
-//             ...acc,
-//             [propKey]: { required: required.includes(propKey), type: getTypeValue(type, list), ...rest }
-//           };
-//         },
-//         { _refs }
-//       )
-//   };
-// };
-
-// const getFlowCongifs = (entries) => entries.reduce(reduceEntry, {});
-
-// const getSchema = (definitions) => getFlowCongifs(Object.entries(definitions));
-
 const getRemoteDescriptor = url => {
   const client = url.startsWith('https') ? _https2.default : _http2.default;
 
@@ -132,10 +87,11 @@ const buildFiles = (output, schema) => schema.forEach((_ref) => {
   });
 });
 
-const doPropertyTransform = required => (name, { $ref, enum: optsList, type }) => {
+const doPropertyTransform = required => (name, { $ref, enum: optsList, items, type }) => {
   let parsedType = '*';
   let exportType;
   let importType;
+  let ucName = `${name[0].toUpperCase()}${name.substr(1)}`;
 
   switch (type) {
     case 'integer':
@@ -146,9 +102,18 @@ const doPropertyTransform = required => (name, { $ref, enum: optsList, type }) =
       parsedType = type;
 
       if (optsList) {
-        parsedType = `${name[0].toUpperCase()}${name.substr(1)}`;
+        parsedType = ucName;
         exportType = optsList.map(opt => `'${opt}'`).join('|');
       }
+      break;
+    case 'array':
+      const subType = doPropertyTransform([])(`${ucName}Opts`, items);
+
+      parsedType = `Array<${subType.type}>`;
+      exportType = subType.exports;
+      importType = subType.imports;
+
+      break;
     default:
       if ($ref) {
         parsedType = importType = $ref.replace('#/definitions/', '');

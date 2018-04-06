@@ -1,5 +1,6 @@
 import test from 'ava';
 import fs from 'fs';
+import https from 'https';
 import path from 'path';
 import sinon from 'sinon';
 import flowParser from 'flow-parser';
@@ -104,4 +105,12 @@ test.cb('resolves array types', (t) => {
       t.end();
     });
   })
+});
+
+test('resolves path from url', async (t) => {
+  sinon.stub(https, 'get').callsArgWith(1, { on: (event, cb) => cb('{ "definitions": {} }')});
+
+  const response = await doctyped('https://localhost:12000/api');
+
+  t.truthy(response);
 });

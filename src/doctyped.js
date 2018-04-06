@@ -49,12 +49,15 @@ const getLocalDescriptor = (url) => new Promise((resolve, reject) => {
   });
 });
 
-const getDescriptor = (url): Promise<Descriptor> => {
+const getDescriptor = async (url): Promise<Descriptor> => {
   try {
-    return getLocalDescriptor(url);
+    const response = await getLocalDescriptor(url);
+
+    return response;
   } catch (e) {
     console.log(e.message);
-    return getRemoteDescriptor(url);
+    const response = await getRemoteDescriptor(url);
+    return response;
   }
 };
 

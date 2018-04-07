@@ -100,6 +100,7 @@ const doPropertyTransform = required => (name, { $ref, enum: optsList, items, ty
     case 'integer':
       parsedType = 'number';
       break;
+    case 'number':
     case 'string':
     case 'boolean':
       parsedType = type;

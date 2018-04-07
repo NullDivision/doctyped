@@ -87,6 +87,7 @@ const doPropertyTransform = (required) =>
       case 'integer':
         parsedType = 'number';
         break
+      case 'number':
       case 'string':
       case 'boolean':
         parsedType = type;

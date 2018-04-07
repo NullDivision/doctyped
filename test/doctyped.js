@@ -107,6 +107,29 @@ test.cb('resolves array types', (t) => {
   })
 });
 
+test.cb('resolves number types', (t) => {
+  const TEST_PATH = path.resolve(TEST_PATH_BASE, 'numberTest');
+
+  fs.mkdirSync(TEST_PATH);
+  doctyped(path.resolve(__dirname, '__mocks__/swagger.json'), { output: TEST_PATH }).then(() => {
+    fs.readFile(`${TEST_PATH}/Order.js.flow`, (err, response) => {
+      const { declaration: { right: { properties } } } = flowParser
+        .parse(response.toString())
+        .body
+        .filter(({ type }) => type === 'ExportNamedDeclaration')
+        .find(({ declaration: { id: { name } } }) => name === 'Order')
+
+      t.is(properties.find(({ key: { name } }) => name === 'petId').value.typeAnnotation.type, 'NumberTypeAnnotation');
+      t.is(
+        properties.find(({ key: { name } }) => name === 'quantity').value.typeAnnotation.type,
+        'NumberTypeAnnotation'
+      );
+
+      t.end();
+    });
+  });
+});
+
 test('resolves path from url', async (t) => {
   sinon.stub(https, 'get').callsArgWith(1, { on: (event, cb) => cb('{ "definitions": {} }')});
 

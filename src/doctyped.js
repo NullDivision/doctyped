@@ -1,59 +1,28 @@
-const fs = require('fs');
-const jsonToFlow = require('json-to-flow');
-const path = require('path');
+// @flow
 
-const DEFAULT_OPTS = { output: path.resolve(process.cwd(), 'tmp') };
+import ejs from 'ejs';
+import fs from 'fs';
+import http from 'http';
+import https from 'https';
+import path from 'path';
 
-const getTypeValue = (type, list) => {
-  if (type === 'integer') {
-    return 'number';
-  }
+type Descriptor = {|
+  definitions: {| [string]: {| properties: {| [string]: {| type?: string |} |}, required?: $ReadOnlyArray<string> |} |}
+|};
+type Definitions = $PropertyType<Descriptor, 'definitions'>;
+type Schema = $ReadOnlyArray<{|
+  name: $Keys<Definitions>,
+  properties: { [$Keys<$PropertyType<Definitions, 'properties'>>]: {| required: boolean, type: string |} }
+|}>;
+type SwaggerProperty = { $ref?: string, enum: Array<string>, items: SwaggerProperty, type: string };
 
-  if (list) {
-    return list.map((value) => `'${value}'`).join('|');
-  }
-
-  return type;
-};
-
-const reduceEntry = (acc, [key, value]) => {
-  const { properties, required = [] } = value;
-  const entries = Object.entries(properties);
-  const _refs = entries
-    .map(([, value]) => value)
-    .filter(({ $ref, items }) => $ref || (items && '$ref' in items))
-    .map(({ $ref, items }) =>
-      $ref ? $ref.replace('#/definitions/', '') : items.$ref.replace('#/definitions/', '')
-    )
-    .reduce((acc, ref) => acc.includes(ref) ? acc : [...acc, ref], []);
-
-  return {
-    ...acc,
-    [key]: Object
-      .entries(properties)
-      .reduce(
-        (acc, [propKey, propValue]) => {
-          const { enum: list, type, ...rest } = propValue;
-
-          return {
-            ...acc,
-            [propKey]: { required: required.includes(propKey), type: getTypeValue(type, list), ...rest }
-          };
-        },
-        { _refs }
-      )
-  };
-};
-
-const getFlowCongifs = (entries) => entries.reduce(reduceEntry, {});
-
-const getSchema = (definitions) => getFlowCongifs(Object.entries(definitions));
+const DEFAULT_OPTS = { output: null };
 
 const getRemoteDescriptor = (url) => {
-  const client = url.startsWith('https') ? 'https' : 'http';
+  const client = url.startsWith('https') ? https : http;
 
   return new Promise((resolve, reject) => {
-    require(client).get(url, (response) => {
+    client.get(url, (response) => {
       let rawData = '';
 
       response.on('data', (chunk) => {
@@ -65,8 +34,8 @@ const getRemoteDescriptor = (url) => {
   });
 };
 
-const getDescriptor = (url) => new Promise((resolve, reject) => {
-  fs.readFile(url, async (err, data) => {
+const getLocalDescriptor = (url) => new Promise((resolve, reject) => {
+  fs.readFile(url, (err, data) => {
     try {
       if (!data) {
         throw err;
@@ -80,32 +49,100 @@ const getDescriptor = (url) => new Promise((resolve, reject) => {
   });
 });
 
-module.exports = async (url, options) => {
-  const opts = { ...DEFAULT_OPTS, ...options };
-
-  let descriptor;
-
+const getDescriptor = async (url): Promise<Descriptor> => {
   try {
-    descriptor = await getDescriptor(url);
+    const response = await getLocalDescriptor(url);
+
+    return response;
   } catch (e) {
     console.log(e.message);
-    descriptor = await getRemoteDescriptor(url);
+    const response = await getRemoteDescriptor(url);
+    return response;
   }
+};
 
-  const schema = getSchema(descriptor.definitions);
+const buildFiles = (output, schema) =>
+  schema.forEach(({ name, ...rest }) =>
+    ejs.renderFile(
+      path.resolve(__dirname, 'template.ejs'),
+      { name, ...rest },
+      (err, result) => {
+        if (err) {
+          console.log(err);
+        }
 
-  if (!fs.existsSync(opts.output)) {
-    fs.mkdirSync(opts.output);
-  }
-
-  jsonToFlow(
-    schema,
-    {
-      preTemplateFn: ({ modelSchema: { _additionalTypes, _refs, ...modelSchema }, ...data }) =>
-        ({ modelSchema, refs: _refs, ...data }),
-      targetPath: opts.output,
-      templatePath: path.join(__dirname, '../src/template.ejs')
-    },
-    () => console.log('Done')
+        fs.writeFile(`${output}/${name}.js.flow`, result, (err) => { err && console.log(err); });
+      }
+    )
   );
+
+const doPropertyTransform = (required) =>
+  (name, { $ref, enum: optsList, items, type }: SwaggerProperty) => {
+    let parsedType = '*';
+    let exportType;
+    let importType;
+    let ucName = `${name[0].toUpperCase()}${name.substr(1)}`;
+
+    switch (type) {
+      case 'integer':
+        parsedType = 'number';
+        break
+      case 'number':
+      case 'string':
+      case 'boolean':
+        parsedType = type;
+
+        if (optsList) {
+          parsedType = ucName;
+          exportType = optsList.map((opt) => `'${opt}'`).join('|');
+        }
+        break;
+      case 'array':
+        const subType = doPropertyTransform([])(`${ucName}Opts`, items);
+
+        parsedType = `Array<${subType.type}>`;
+        exportType = subType.exports;
+        importType = subType.imports;
+
+        break;
+      default:
+        if ($ref) {
+          parsedType = importType = $ref.replace('#/definitions/', '');
+        }
+    }
+
+    return {
+      exports: exportType,
+      imports: importType,
+      required: !!required && required.includes(name),
+      type: parsedType
+    };
+  };
+
+const getSchema = (definitions: Definitions): Schema => {
+  const definitionEntries: $ReadOnlyArray<[string, any]> = Object.entries(definitions);
+
+  return definitionEntries
+    .map(([name, { properties, required }]: [string, $PropertyType<Definitions, 'properties'>]) => {
+      const getProperty = doPropertyTransform(required);
+
+      return {
+        name,
+        properties: Object
+          .entries(properties)
+          .reduce((acc, [propName, prop]: [string, any]) => ({ ...acc, [propName]: getProperty(propName, prop) }), {})
+      };
+    });
+};
+
+export default async (url: string, options: {}): Promise<Schema> => {
+  const { output } = { ...DEFAULT_OPTS, ...options };
+  const { definitions } = await getDescriptor(url);
+  const schema = getSchema(definitions);
+
+  if (output) {
+    buildFiles(output, schema);
+  }
+
+  return schema;
 };

@@ -5,7 +5,7 @@
     ]
   },
   "bin": {
-    "doctyped": "src/index.js"
+    "doctyped": "dist/index.js"
   },
   "name": "doctyped",
   "version": "1.0.0",

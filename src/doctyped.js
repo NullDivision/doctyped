@@ -18,6 +18,10 @@ type SwaggerProperty = { $ref?: string, enum: Array<string>, items: SwaggerPrope
 
 const DEFAULT_OPTS = { output: null };
 
+const getLogger = (allow) => (...content) => allow && console.log(...content);
+
+const logger = getLogger(process.env.NODE_ENV === 'development');
+
 const getRemoteDescriptor = (url) => {
   const client = url.startsWith('https') ? https : http;
 
@@ -43,7 +47,7 @@ const getLocalDescriptor = (url) => new Promise((resolve, reject) => {
 
       resolve(JSON.parse(data.toString()));
     } catch (e) {
-      console.log(e.message);
+      logger(e.message);
       reject(new Error('Could not resolve path locally'));
     }
   });
@@ -55,7 +59,7 @@ const getDescriptor = async (url): Promise<Descriptor> => {
 
     return response;
   } catch (e) {
-    console.log(e.message);
+    logger(e.message);
     const response = await getRemoteDescriptor(url);
     return response;
   }
@@ -68,7 +72,7 @@ const buildFiles = (output, schema) =>
       { name, ...rest },
       (err, result) => {
         if (err) {
-          console.log(err);
+          logger(err);
         }
 
         fs.writeFile(`${output}/${name}.js.flow`, result, (err) => { err && console.log(err); });

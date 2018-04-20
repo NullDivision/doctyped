@@ -22,6 +22,19 @@ const getLogger = (allow) => (...content) => allow && console.log(...content);
 
 const logger = getLogger(process.env.NODE_ENV === 'development');
 
+const getAccumulatedExtras = (properties) =>
+  Object
+    .entries(properties)
+    .reduce(
+      // $FlowFixMe
+      ({ exportTypes: accExports, importTypes: accImports }, [name, { exportTypes: newExport, importTypes: newImport, ...rest }]) => {
+        const result = { exportTypes: newExport ? [...accExports, { name: name[0].toUpperCase() + name.slice(1), type: newExport }] : accExports, importTypes: newImport ? [...accImports, newImport] : accImports };
+
+        return result;
+      },
+      { exportTypes: [], importTypes: [] }
+    );
+
 const getRemoteDescriptor = (url) => {
   const client = url.startsWith('https') ? https : http;
 
@@ -66,16 +79,16 @@ const getDescriptor = async (url): Promise<Descriptor> => {
 };
 
 const buildFiles = (output, schema) =>
-  schema.forEach(({ name, ...rest }) =>
+  schema.forEach(({ name, properties }) =>
     ejs.renderFile(
       path.resolve(__dirname, 'template.ejs'),
-      { name, ...rest },
+      { name, properties, ...getAccumulatedExtras(properties) },
       (err, result) => {
         if (err) {
           logger(err);
         }
 
-        fs.writeFile(`${output}/${name}.js.flow`, result, (err) => { err && console.log(err); });
+        fs.writeFile(`${output}/${name}.js.flow`, result, (err) => { err && logger(err); });
       }
     )
   );
@@ -105,8 +118,8 @@ const doPropertyTransform = (required) =>
         const subType = doPropertyTransform([])(`${ucName}Opts`, items);
 
         parsedType = `Array<${subType.type}>`;
-        exportType = subType.exports;
-        importType = subType.imports;
+        exportType = subType.exportTypes;
+        importType = subType.importTypes;
 
         break;
       default:
@@ -116,8 +129,8 @@ const doPropertyTransform = (required) =>
     }
 
     return {
-      exports: exportType,
-      imports: importType,
+      exportTypes: exportType,
+      importTypes: importType,
       required: !!required && required.includes(name),
       type: parsedType
     };

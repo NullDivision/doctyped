@@ -28,9 +28,19 @@ var _path2 = _interopRequireDefault(_path);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
-
 const DEFAULT_OPTS = { output: null };
+
+const getLogger = allow => (...content) => allow && console.log(...content);
+
+const logger = getLogger(process.env.NODE_ENV === 'development');
+
+const getAccumulatedExtras = properties => Object.entries(properties).reduce(
+// $FlowFixMe
+({ exportTypes: accExports, importTypes: accImports }, [name, { exportTypes: newExport, importTypes: newImport, ...rest }]) => {
+  const result = { exportTypes: newExport ? [...accExports, { name: name[0].toUpperCase() + name.slice(1), type: newExport }] : accExports, importTypes: newImport ? [...accImports, newImport] : accImports };
+
+  return result;
+}, { exportTypes: [], importTypes: [] });
 
 const getRemoteDescriptor = url => {
   const client = url.startsWith('https') ? _https2.default : _http2.default;
@@ -57,7 +67,7 @@ const getLocalDescriptor = url => new Promise((resolve, reject) => {
 
       resolve(JSON.parse(data.toString()));
     } catch (e) {
-      console.log(e.message);
+      logger(e.message);
       reject(new Error('Could not resolve path locally'));
     }
   });
@@ -69,26 +79,21 @@ const getDescriptor = async url => {
 
     return response;
   } catch (e) {
-    console.log(e.message);
+    logger(e.message);
     const response = await getRemoteDescriptor(url);
     return response;
   }
 };
 
-const buildFiles = (output, schema) => schema.forEach((_ref) => {
-  let { name } = _ref,
-      rest = _objectWithoutProperties(_ref, ['name']);
+const buildFiles = (output, schema) => schema.forEach(({ name, properties }) => _ejs2.default.renderFile(_path2.default.resolve(__dirname, 'template.ejs'), _extends({ name, properties }, getAccumulatedExtras(properties)), (err, result) => {
+  if (err) {
+    logger(err);
+  }
 
-  return _ejs2.default.renderFile(_path2.default.resolve(__dirname, 'template.ejs'), _extends({ name }, rest), (err, result) => {
-    if (err) {
-      console.log(err);
-    }
-
-    _fs2.default.writeFile(`${output}/${name}.js.flow`, result, err => {
-      err && console.log(err);
-    });
+  _fs2.default.writeFile(`${output}/${name}.js.flow`, result, err => {
+    err && logger(err);
   });
-});
+}));
 
 const doPropertyTransform = required => (name, { $ref, enum: optsList, items, type }) => {
   let parsedType = '*';
@@ -114,8 +119,8 @@ const doPropertyTransform = required => (name, { $ref, enum: optsList, items, ty
       const subType = doPropertyTransform([])(`${ucName}Opts`, items);
 
       parsedType = `Array<${subType.type}>`;
-      exportType = subType.exports;
-      importType = subType.imports;
+      exportType = subType.exportTypes;
+      importType = subType.importTypes;
 
       break;
     default:
@@ -125,8 +130,8 @@ const doPropertyTransform = required => (name, { $ref, enum: optsList, items, ty
   }
 
   return {
-    exports: exportType,
-    imports: importType,
+    exportTypes: exportType,
+    importTypes: importType,
     required: !!required && required.includes(name),
     type: parsedType
   };

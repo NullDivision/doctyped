@@ -75,7 +75,7 @@ const buildFiles = (output, schema) =>
           logger(err);
         }
 
-        fs.writeFile(`${output}/${name}.js.flow`, result, (err) => { err && console.log(err); });
+        fs.writeFile(`${output}/${name}.js.flow`, result, (err) => { err && logger(err); });
       }
     )
   );

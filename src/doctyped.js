@@ -16,7 +16,7 @@ type Schema = $ReadOnlyArray<{|
 |}>;
 type SwaggerProperty = { $ref?: string, enum: Array<string>, items: SwaggerProperty, type: string };
 
-const DEFAULT_OPTS = { output: null };
+const DEFAULT_OPTS = { format: 'flow', output: null };
 
 const getLogger = (allow) => (...content) => allow && console.log(...content);
 
@@ -78,7 +78,7 @@ const getDescriptor = async (url): Promise<Descriptor> => {
   }
 };
 
-const buildFiles = (output, schema) =>
+const buildFiles = (format, output, schema) =>
   schema.forEach(({ name, properties }) =>
     ejs.renderFile(
       path.resolve(__dirname, 'template.ejs'),
@@ -88,7 +88,11 @@ const buildFiles = (output, schema) =>
           logger(err);
         }
 
-        fs.writeFile(`${output}/${name}.js.flow`, result, (err) => { err && logger(err); });
+        fs.writeFile(
+          `${output}/${name}.${format === 'ts' ? 'ts.d' : 'js.flow'}`,
+          result,
+          (err) => { err && logger(err); }
+        );
       }
     )
   );
@@ -152,13 +156,13 @@ const getSchema = (definitions: Definitions): Schema => {
     });
 };
 
-export default async (url: string, options: {}): Promise<Schema> => {
-  const { output } = { ...DEFAULT_OPTS, ...options };
+export default async (url: string, options: { output?: string }): Promise<Schema> => {
+  const { format, output } = { ...DEFAULT_OPTS, ...options };
   const { definitions } = await getDescriptor(url);
   const schema = getSchema(definitions);
 
   if (output) {
-    buildFiles(output, schema);
+    buildFiles(format, output, schema);
   }
 
   return schema;

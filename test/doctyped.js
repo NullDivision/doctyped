@@ -137,3 +137,16 @@ test('resolves path from url', async (t) => {
 
   t.truthy(response);
 });
+
+test.cb('generates typescript files', (t) => {
+  const TEST_PATH = path.join(TEST_PATH_BASE, 'ts');
+
+  fs.mkdirSync(TEST_PATH);
+  doctyped(path.resolve(__dirname, '__mocks__/swagger.json'), { format: 'ts', output: TEST_PATH }).then(() => {
+    fs.readdir(TEST_PATH, (err, response) => {
+      Object.keys(descriptor.definitions).forEach((modelName) => t.truthy(response.includes(`${modelName}.ts.d`)));
+
+      t.end();
+    });
+  });
+});

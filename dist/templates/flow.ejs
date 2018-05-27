@@ -1,0 +1,13 @@
+// @flow
+<% if (importTypes.length) {importTypes.forEach((name) => { %>
+import type { <%= name %> } from './<%= name %>.js.flow';<% }) %>
+<% } _%>
+<% if (exportTypes.length) {exportTypes.forEach((exportType) => { %>
+export type <%= exportType.name %> = <%- exportType.type %>;<% }) %>
+<% } _%>
+
+export type <%= name %> = {
+<%_ Object.entries(properties).forEach(([propName, { required, type }]) => { -%>
+  <%= propName %>: <% if (!required) { %>?<% } %><%- type %>,
+<% }); -%>
+};

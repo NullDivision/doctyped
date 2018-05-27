@@ -28,7 +28,9 @@ var _path2 = _interopRequireDefault(_path);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const DEFAULT_OPTS = { output: null };
+const FORMAT_FLOW = 'flow';
+const FORMAT_TS = 'ts';
+const DEFAULT_OPTS = { format: FORMAT_FLOW, output: null };
 
 const getLogger = allow => (...content) => allow && console.log(...content);
 
@@ -37,7 +39,10 @@ const logger = getLogger(process.env.NODE_ENV === 'development');
 const getAccumulatedExtras = properties => Object.entries(properties).reduce(
 // $FlowFixMe
 ({ exportTypes: accExports, importTypes: accImports }, [name, { exportTypes: newExport, importTypes: newImport, ...rest }]) => {
-  const result = { exportTypes: newExport ? [...accExports, { name: name[0].toUpperCase() + name.slice(1), type: newExport }] : accExports, importTypes: newImport ? [...accImports, newImport] : accImports };
+  const result = {
+    exportTypes: newExport ? [...accExports, { name: name[0].toUpperCase() + name.slice(1), type: newExport }] : accExports,
+    importTypes: newImport ? [...accImports, newImport] : accImports
+  };
 
   return result;
 }, { exportTypes: [], importTypes: [] });
@@ -85,15 +90,19 @@ const getDescriptor = async url => {
   }
 };
 
-const buildFiles = (output, schema) => schema.forEach(({ name, properties }) => _ejs2.default.renderFile(_path2.default.resolve(__dirname, 'template.ejs'), _extends({ name, properties }, getAccumulatedExtras(properties)), (err, result) => {
-  if (err) {
-    logger(err);
-  }
+const buildFiles = (format, output, schema) => schema.forEach(({ name, properties }) => {
+  const templateFile = format === FORMAT_TS ? 'typescript' : 'flow';
 
-  _fs2.default.writeFile(`${output}/${name}.js.flow`, result, err => {
-    err && logger(err);
+  return _ejs2.default.renderFile(_path2.default.resolve(__dirname, `templates/${templateFile}.ejs`), _extends({ name, properties }, getAccumulatedExtras(properties)), (err, result) => {
+    if (err) {
+      logger(err);
+    }
+
+    _fs2.default.writeFile(`${output}/${name}.${format === FORMAT_TS ? 'd.ts' : 'js.flow'}`, result, err => {
+      err && logger(err);
+    });
   });
-}));
+});
 
 const doPropertyTransform = required => (name, { $ref, enum: optsList, items, type }) => {
   let parsedType = '*';
@@ -151,12 +160,12 @@ const getSchema = definitions => {
 };
 
 exports.default = async (url, options) => {
-  const { output } = _extends({}, DEFAULT_OPTS, options);
+  const { format, output } = _extends({}, DEFAULT_OPTS, options);
   const { definitions } = await getDescriptor(url);
   const schema = getSchema(definitions);
 
   if (output) {
-    buildFiles(output, schema);
+    buildFiles(format, output, schema);
   }
 
   return schema;

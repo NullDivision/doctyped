@@ -3,6 +3,7 @@
 import yargs from 'yargs';
 
 import doctyped from './doctyped';
+import { version } from '../package.json';
 
 yargs
   .usage('Usage: $0 /path/to/descriptor')
@@ -10,7 +11,7 @@ yargs
   .help()
   .alias('help', 'h')
   // version
-  .version(require('../package.json').version)
+  .version(version)
   .alias('version', 'v')
   .option('output', { alias: 'o' })
   .describe('output', 'Destination directory')

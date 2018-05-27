@@ -1,9 +1,10 @@
 import test from 'ava';
+import flowParser from 'flow-parser';
 import fs from 'fs';
 import https from 'https';
 import path from 'path';
 import sinon from 'sinon';
-import flowParser from 'flow-parser';
+import ts from 'typescript';
 
 import descriptor from './__mocks__/swagger.json';
 import doctyped from '../src/doctyped';
@@ -144,8 +145,25 @@ test.cb('generates typescript files', (t) => {
   fs.mkdirSync(TEST_PATH);
   doctyped(path.resolve(__dirname, '__mocks__/swagger.json'), { format: 'ts', output: TEST_PATH }).then(() => {
     fs.readdir(TEST_PATH, (err, response) => {
-      Object.keys(descriptor.definitions).forEach((modelName) => t.truthy(response.includes(`${modelName}.ts.d`)));
+      Object.keys(descriptor.definitions).forEach((modelName) => t.truthy(response.includes(`${modelName}.d.ts`)));
 
+      t.end();
+    });
+  });
+});
+
+test.cb('builds valid ts interface', (t) => {
+  const TEST_PATH = path.join(TEST_PATH_BASE, 'tsInterface');
+
+  fs.mkdirSync(TEST_PATH);
+  doctyped(path.resolve(__dirname, '__mocks__/swagger.json'), { format: 'ts', output: TEST_PATH }).then(() => {
+    const TEST_FILE = path.join(TEST_PATH, 'Pet.d.ts');
+
+    fs.readFile(TEST_FILE, (err, result) => {
+      const { statements } = ts.createSourceFile(TEST_FILE, result.toString(), ts.ScriptTarget.ES6, false);
+      const [CategoryImport, TagImport, ...rest] = statements;
+      t.is(CategoryImport.moduleSpecifier.text, './Category.ts');
+      t.is(TagImport.moduleSpecifier.text, './Tag.ts');
       t.end();
     });
   });

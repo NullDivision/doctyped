@@ -16,7 +16,9 @@ type Schema = $ReadOnlyArray<{|
 |}>;
 type SwaggerProperty = { $ref?: string, enum: Array<string>, items: SwaggerProperty, type: string };
 
-const DEFAULT_OPTS = { format: 'flow', output: null };
+const FORMAT_FLOW = 'flow';
+const FORMAT_TS = 'ts';
+const DEFAULT_OPTS = { format: FORMAT_FLOW, output: null };
 
 const getLogger = (allow) => (...content) => allow && console.log(...content);
 
@@ -28,7 +30,10 @@ const getAccumulatedExtras = (properties) =>
     .reduce(
       // $FlowFixMe
       ({ exportTypes: accExports, importTypes: accImports }, [name, { exportTypes: newExport, importTypes: newImport, ...rest }]) => {
-        const result = { exportTypes: newExport ? [...accExports, { name: name[0].toUpperCase() + name.slice(1), type: newExport }] : accExports, importTypes: newImport ? [...accImports, newImport] : accImports };
+        const result = {
+          exportTypes: newExport ? [...accExports, { name: name[0].toUpperCase() + name.slice(1), type: newExport }] : accExports,
+          importTypes: newImport ? [...accImports, newImport] : accImports
+        };
 
         return result;
       },
@@ -79,9 +84,11 @@ const getDescriptor = async (url): Promise<Descriptor> => {
 };
 
 const buildFiles = (format, output, schema) =>
-  schema.forEach(({ name, properties }) =>
-    ejs.renderFile(
-      path.resolve(__dirname, 'template.ejs'),
+  schema.forEach(({ name, properties }) => {
+    const templateFile = format === FORMAT_TS ? 'typescript' : 'flow';
+
+    return ejs.renderFile(
+      path.resolve(__dirname, `templates/${templateFile}.ejs`),
       { name, properties, ...getAccumulatedExtras(properties) },
       (err, result) => {
         if (err) {
@@ -89,13 +96,13 @@ const buildFiles = (format, output, schema) =>
         }
 
         fs.writeFile(
-          `${output}/${name}.${format === 'ts' ? 'ts.d' : 'js.flow'}`,
+          `${output}/${name}.${format === FORMAT_TS ? 'd.ts' : 'js.flow'}`,
           result,
           (err) => { err && logger(err); }
         );
       }
-    )
-  );
+    );
+  });
 
 const doPropertyTransform = (required) =>
   (name, { $ref, enum: optsList, items, type }: SwaggerProperty) => {

@@ -13,20 +13,22 @@ type SchemaValue = {| name: string, properties: { [string]: {| required: boolean
 type Schema = $ReadOnlyArray<SchemaValue>;
 
 const getAccumulatedExtras = (properties) =>
-  Object
-    .entries(properties)
-    .reduce(
-      // $FlowFixMe
-      ({ exportTypes: accExports, importTypes: accImports }, [name, { exportTypes: newExport, importTypes: newImport, ...rest }]) => {
-        const result = {
-          exportTypes: newExport ? [...accExports, { name: name[0].toUpperCase() + name.slice(1), type: newExport }] : accExports,
-          importTypes: newImport ? [...accImports, newImport] : accImports
-        };
+  Object.entries(properties).reduce((acc, currentValue) => {
+      const { exportTypes: accExports, importTypes: accImports } = acc;
+      const [name, value] = currentValue;
 
-        return result;
-      },
-      { exportTypes: [], importTypes: [] }
-    );
+      if (!(value instanceof Object)) return acc;
+      
+      const { exportTypes: newExport, importTypes: newImport, ...rest } = value;
+      const result = {
+        exportTypes: newExport ? [...accExports, { name: name[0].toUpperCase() + name.slice(1), type: newExport }] : accExports,
+        importTypes: newImport && !accImports.includes(newImport) ? [...accImports, newImport] : accImports
+      };
+
+      return result;
+    },
+    { exportTypes: [], importTypes: [] }
+  );
 
 export default (format: typeof FORMAT_FLOW | typeof FORMAT_TS, output: string, schema: Schema | mixed) => {
   if (!Array.isArray(schema)) return;

@@ -9,7 +9,8 @@ import logger from './logger';
 export const FORMAT_FLOW = 'flow';
 export const FORMAT_TS = 'ts';
 
-type Schema = $ReadOnlyArray<{ name: string, properties: {} }>;
+type SchemaValue = {| name: string, properties: { [string]: {| required: boolean, type: string |} } |};
+type Schema = $ReadOnlyArray<SchemaValue>;
 
 const getAccumulatedExtras = (properties) =>
   Object
@@ -27,8 +28,13 @@ const getAccumulatedExtras = (properties) =>
       { exportTypes: [], importTypes: [] }
     );
 
-const buildFiles = (format: typeof FORMAT_FLOW | typeof FORMAT_TS, output: string, schema: Schema) =>
-  schema.forEach(({ name, properties }) => {
+export default (format: typeof FORMAT_FLOW | typeof FORMAT_TS, output: string, schema: Schema | mixed) => {
+  if (!Array.isArray(schema)) return;
+  
+  return schema.forEach((descriptor: SchemaValue | mixed) => {
+    if (!(descriptor instanceof Object)) return;
+    
+    const { name, properties } = descriptor;
     const templateFile = format === FORMAT_TS ? 'typescript' : 'flow';
 
     return ejs.renderFile(
@@ -47,5 +53,4 @@ const buildFiles = (format: typeof FORMAT_FLOW | typeof FORMAT_TS, output: strin
       }
     );
   });
-
-export default buildFiles;
+};

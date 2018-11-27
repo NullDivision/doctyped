@@ -7,9 +7,8 @@ import https from 'https';
 import buildFiles, { FORMAT_FLOW } from './fileGenerator';
 import logger from './logger';
 
-type Descriptor = {|
-  definitions: {| [string]: {| properties: {| [string]: {| type?: string |} |}, required?: $ReadOnlyArray<string> |} |}
-|};
+type DescriptorValue = {| properties: {| [string]: {| type?: string |} |}, required?: $ReadOnlyArray<string> |};
+type Descriptor = {| definitions: {| [string]: DescriptorValue |} |};
 type Definitions = $PropertyType<Descriptor, 'definitions'>;
 type Schema = $ReadOnlyArray<{|
   name: $Keys<Definitions>,
@@ -92,7 +91,7 @@ const doPropertyTransform = (required) =>
 
         break;
       default:
-        if ($ref) {
+        if (typeof $ref === 'string') {
           parsedType = importType = $ref.replace('#/definitions/', '');
         }
     }
@@ -106,27 +105,35 @@ const doPropertyTransform = (required) =>
   };
 
 const getSchema = (definitions: Definitions): Schema => {
-  const definitionEntries: $ReadOnlyArray<[string, any]> = Object.entries(definitions);
+  const definitionEntries = Object.entries(definitions);
 
   return definitionEntries
-    .map(([name, { properties, required }]: [string, $PropertyType<Definitions, 'properties'>]) => {
+    .map(([name, value]) => {
+      if (!(value instanceof Object)) return { name: '', properties: {} };
+
+      const { properties, required } = value;
       const getProperty = doPropertyTransform(required);
+      const propEntries = Object
 
       return {
         name,
         properties: Object
           .entries(properties)
-          .reduce((acc, [propName, prop]: [string, any]) => ({ ...acc, [propName]: getProperty(propName, prop) }), {})
+          .reduce((acc, [propName, prop]) => {
+            if (!(prop instanceof Object)) return acc;
+            
+            return { ...acc, [propName]: getProperty(propName, prop) };
+          }, {})
       };
     });
 };
 
-export default async (url: string, options: { output?: string }): Promise<Schema> => {
+export default async (url: string, options: {| output?: string |}): Promise<Schema> => {
   const { format, output } = { ...DEFAULT_OPTS, ...options };
   const { definitions } = await getDescriptor(url);
   const schema = getSchema(definitions);
 
-  if (output) {
+  if (typeof output === 'string') {
     buildFiles(format, output, schema);
   }
 

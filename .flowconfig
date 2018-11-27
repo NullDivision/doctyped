@@ -5,6 +5,7 @@
 [libs]
 
 [lints]
+all=error
 
 [options]
 

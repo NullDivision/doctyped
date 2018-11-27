@@ -1,4 +1,4 @@
-# doctyped
+# doctyped · [![Build Status](https://travis-ci.com/NullDivision/doctyped.svg?branch=master)](https://travis-ci.com/NullDivision/doctyped)
 
 ## Description
 

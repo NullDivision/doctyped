@@ -1,10 +1,11 @@
 // @flow
 
-import ejs from 'ejs';
 import fs from 'fs';
 import http from 'http';
 import https from 'https';
-import path from 'path';
+
+import buildFiles, { FORMAT_FLOW } from './fileGenerator';
+import logger from './logger';
 
 type Descriptor = {|
   definitions: {| [string]: {| properties: {| [string]: {| type?: string |} |}, required?: $ReadOnlyArray<string> |} |}
@@ -16,29 +17,7 @@ type Schema = $ReadOnlyArray<{|
 |}>;
 type SwaggerProperty = { $ref?: string, enum: Array<string>, items: SwaggerProperty, type: string };
 
-const FORMAT_FLOW = 'flow';
-const FORMAT_TS = 'ts';
 const DEFAULT_OPTS = { format: FORMAT_FLOW, output: null };
-
-const getLogger = (allow) => (...content) => allow && console.log(...content);
-
-const logger = getLogger(process.env.NODE_ENV === 'development');
-
-const getAccumulatedExtras = (properties) =>
-  Object
-    .entries(properties)
-    .reduce(
-      // $FlowFixMe
-      ({ exportTypes: accExports, importTypes: accImports }, [name, { exportTypes: newExport, importTypes: newImport, ...rest }]) => {
-        const result = {
-          exportTypes: newExport ? [...accExports, { name: name[0].toUpperCase() + name.slice(1), type: newExport }] : accExports,
-          importTypes: newImport ? [...accImports, newImport] : accImports
-        };
-
-        return result;
-      },
-      { exportTypes: [], importTypes: [] }
-    );
 
 const getRemoteDescriptor = (url) => {
   const client = url.startsWith('https') ? https : http;
@@ -82,27 +61,6 @@ const getDescriptor = async (url): Promise<Descriptor> => {
     return response;
   }
 };
-
-const buildFiles = (format, output, schema) =>
-  schema.forEach(({ name, properties }) => {
-    const templateFile = format === FORMAT_TS ? 'typescript' : 'flow';
-
-    return ejs.renderFile(
-      path.resolve(__dirname, `templates/${templateFile}.ejs`),
-      { name, properties, ...getAccumulatedExtras(properties) },
-      (err, result) => {
-        if (err) {
-          logger(err);
-        }
-
-        fs.writeFile(
-          `${output}/${name}.${format === FORMAT_TS ? 'd.ts' : 'js.flow'}`,
-          result,
-          (err) => { err && logger(err); }
-        );
-      }
-    );
-  });
 
 const doPropertyTransform = (required) =>
   (name, { $ref, enum: optsList, items, type }: SwaggerProperty) => {

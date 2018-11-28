@@ -8,8 +8,15 @@ import getSchema, { type Schema } from './builder';
 import buildFiles, { FORMAT_FLOW } from './fileGenerator';
 import logger from './logger';
 
-type DescriptorValue = {| properties: {| [string]: {| type?: string |} |}, required?: $ReadOnlyArray<string> |};
-export type Descriptor = {| definitions: {| [string]: DescriptorValue |} |};
+export type PropertyValue = {| default?: mixed, type?: string |};
+export type DescriptorValue = {|
+  additionalProperties: PropertyValue,
+  properties?: { [string]: PropertyValue },
+  required?: $ReadOnlyArray<string>,
+  type: string,
+  xml: {}
+|};
+export type Descriptor = {| definitions: { [string]: DescriptorValue } |};
 
 const DEFAULT_OPTS = { format: FORMAT_FLOW, output: null };
 

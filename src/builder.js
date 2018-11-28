@@ -1,9 +1,12 @@
 // @flow
 
-import type { Descriptor } from './doctyped';
+import type { Descriptor, DescriptorValue } from './doctyped';
 
 type SwaggerProperty = { $ref?: string, enum: Array<string>, items: SwaggerProperty, type: string };
-export type SchemaValue = {| name: string, properties: { [string]: {| required: boolean, type: string |} } |};
+export type SchemaValue = {|
+  name: string,
+  properties: { [string]: {| exportTypes?: string, importTypes?: string, required: boolean, type: string |} }
+|};
 export type Schema = $ReadOnlyArray<SchemaValue>;
 
 const doPropertyTransform = (required) =>
@@ -49,26 +52,30 @@ const doPropertyTransform = (required) =>
     };
   };
 
-export default (definitions: $PropertyType<Descriptor, 'definitions'>): Schema => {
+const mapDefinition = (name, value): SchemaValue => {
+  const { additionalProperties, properties, required }: DescriptorValue = value;
+  const getProperty = doPropertyTransform(required);
+  const propertyEntries = Object.entries(properties);
+  const mergedProperties = additionalProperties ? [...propertyEntries, ['[string]', additionalProperties]]
+                                                : propertyEntries;
+
+  const resolvedProperties = mergedProperties.reduce((acc, [propName, prop]) => {
+    if (!(prop instanceof Object)) return acc;
+    
+    return { ...acc, [propName]: getProperty(propName, prop) };
+  }, {});
+
+  return { name, properties: resolvedProperties };
+};
+
+type Definitions = $PropertyType<Descriptor, 'definitions'>;
+
+export default (definitions: Definitions): Schema => {
   const definitionEntries = Object.entries(definitions);
 
-  return definitionEntries
-    .map(([name, value]) => {
+  return definitionEntries.map(([name, value]) => {
       if (!(value instanceof Object)) return { name: '', properties: {} };
 
-      const { properties, required } = value;
-      const getProperty = doPropertyTransform(required);
-      const propEntries = Object
-
-      return {
-        name,
-        properties: Object
-          .entries(properties)
-          .reduce((acc, [propName, prop]) => {
-            if (!(prop instanceof Object)) return acc;
-            
-            return { ...acc, [propName]: getProperty(propName, prop) };
-          }, {})
-      };
+      return mapDefinition(name, value);
     });
 };;

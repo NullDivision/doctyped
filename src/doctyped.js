@@ -4,17 +4,19 @@ import fs from 'fs';
 import http from 'http';
 import https from 'https';
 
+import getSchema, { type Schema } from './builder';
 import buildFiles, { FORMAT_FLOW } from './fileGenerator';
 import logger from './logger';
 
-type DescriptorValue = {| properties: {| [string]: {| type?: string |} |}, required?: $ReadOnlyArray<string> |};
-type Descriptor = {| definitions: {| [string]: DescriptorValue |} |};
-type Definitions = $PropertyType<Descriptor, 'definitions'>;
-type Schema = $ReadOnlyArray<{|
-  name: $Keys<Definitions>,
-  properties: { [$Keys<$PropertyType<Definitions, 'properties'>>]: {| required: boolean, type: string |} }
-|}>;
-type SwaggerProperty = { $ref?: string, enum: Array<string>, items: SwaggerProperty, type: string };
+export type PropertyValue = {| default?: mixed, type?: string |};
+export type DescriptorValue = {|
+  additionalProperties: PropertyValue,
+  properties?: { [string]: PropertyValue },
+  required?: $ReadOnlyArray<string>,
+  type: string,
+  xml: {}
+|};
+export type Descriptor = {| definitions: { [string]: DescriptorValue } |};
 
 const DEFAULT_OPTS = { format: FORMAT_FLOW, output: null };
 
@@ -59,73 +61,6 @@ const getDescriptor = async (url): Promise<Descriptor> => {
     const response = await getRemoteDescriptor(url);
     return response;
   }
-};
-
-const doPropertyTransform = (required) =>
-  (name, { $ref, enum: optsList, items, type }: SwaggerProperty) => {
-    let parsedType = '*';
-    let exportType;
-    let importType;
-    let ucName = `${name[0].toUpperCase()}${name.substr(1)}`;
-
-    switch (type) {
-      case 'integer':
-        parsedType = 'number';
-        break
-      case 'number':
-      case 'string':
-      case 'boolean':
-        parsedType = type;
-
-        if (optsList) {
-          parsedType = ucName;
-          exportType = optsList.map((opt) => `'${opt}'`).join('|');
-        }
-        break;
-      case 'array':
-        const subType = doPropertyTransform([])(`${ucName}Opts`, items);
-
-        parsedType = `Array<${subType.type}>`;
-        exportType = subType.exportTypes;
-        importType = subType.importTypes;
-
-        break;
-      default:
-        if (typeof $ref === 'string') {
-          parsedType = importType = $ref.replace('#/definitions/', '');
-        }
-    }
-
-    return {
-      exportTypes: exportType,
-      importTypes: importType,
-      required: !!required && required.includes(name),
-      type: parsedType
-    };
-  };
-
-const getSchema = (definitions: Definitions): Schema => {
-  const definitionEntries = Object.entries(definitions);
-
-  return definitionEntries
-    .map(([name, value]) => {
-      if (!(value instanceof Object)) return { name: '', properties: {} };
-
-      const { properties, required } = value;
-      const getProperty = doPropertyTransform(required);
-      const propEntries = Object
-
-      return {
-        name,
-        properties: Object
-          .entries(properties)
-          .reduce((acc, [propName, prop]) => {
-            if (!(prop instanceof Object)) return acc;
-            
-            return { ...acc, [propName]: getProperty(propName, prop) };
-          }, {})
-      };
-    });
 };
 
 export default async (url: string, options: {| output?: string |}): Promise<Schema> => {

@@ -1,5 +1,7 @@
 // @flow
 
+import type { Schema, SchemaValue } from './builder';
+
 import ejs from 'ejs';
 import fs from 'fs';
 import path from 'path';
@@ -8,9 +10,6 @@ import logger from './logger';
 
 export const FORMAT_FLOW = 'flow';
 export const FORMAT_TS = 'ts';
-
-type SchemaValue = {| name: string, properties: { [string]: {| required: boolean, type: string |} } |};
-type Schema = $ReadOnlyArray<SchemaValue>;
 
 const getAccumulatedExtras = (properties) =>
   Object.entries(properties).reduce((acc, currentValue) => {

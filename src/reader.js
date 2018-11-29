@@ -15,6 +15,7 @@ export type DescriptorValue = {|
   xml: {}
 |};
 export type Descriptor = {| definitions: { [string]: DescriptorValue } |};
+export type GraphQlResponse = {| types: $ReadOnlyArray<{}> |};
 
 export const API_GRAPHQL = 'graphql';
 export const API_SWAGGER = 'swagger';
@@ -47,7 +48,7 @@ const getRemoteDescriptor = (client: typeof http | typeof https) => (url) => new
   });
 });
 
-const resolveSwaggerDescriptor = (client) => async (url) => {
+const resolveSwaggerDescriptor = (client) => async (url): Promise<Descriptor> => {
   try {
     const { definitions } = await getLocalDescriptor(url);
 
@@ -59,25 +60,26 @@ const resolveSwaggerDescriptor = (client) => async (url) => {
   }
 };
 
-const resolveGraphqlDescriptor = (client: typeof http | typeof https) => (url) => new Promise((resolve) => {
-  // $FlowFixMe
-  const req = client.request(url, { method: 'POST' }, (res) => {
-    let data = '';
-    
-    res.setEncoding('utf8');
-    res.on('data', (chunk) => {
-      data += chunk;
-    });
-    res.on('end', () => {
-      resolve(JSON.parse(data));
-    });
-  })
-  req.writeData(`{"query":"query IntrospectionQuery {\n  __schema {\n    queryType {\n      name\n    }\n    mutationType {\n      name\n    }\n    subscriptionType {\n      name\n    }\n    types {\n      ...FullType\n    }\n    directives {\n      name\n      locations\n      args {\n        ...InputValue\n      }\n    }\n  }\n}\n\nfragment FullType on __Type {\n  kind\n  name\n  fields {\n    name\n    args {\n      ...InputValue\n    }\n    type {\n      ...TypeRef\n    }\n  }\n  inputFields {\n    ...InputValue\n  }\n  interfaces {\n    ...TypeRef\n  }\n  enumValues {\n    name\n  }\n  possibleTypes {\n    ...TypeRef\n  }\n}\n\nfragment InputValue on __InputValue {\n  name\n  type {\n    ...TypeRef\n  }\n  defaultValue\n}\n\nfragment TypeRef on __Type {\n  kind\n  name\n  ofType {\n    kind\n    name\n    ofType {\n      kind\n      name\n      ofType {\n        kind\n        name\n        ofType {\n          kind\n          name\n          ofType {\n            kind\n            name\n            ofType {\n              kind\n              name\n              ofType {\n                kind\n                name\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}","variables":null,"operationName":"IntrospectionQuery"}`);
-  req.end();
-});
+const resolveGraphqlDescriptor = (client: typeof http | typeof https) =>
+  (url): Promise<GraphQlResponse> => new Promise((resolve) => {
+    // $FlowFixMe
+    const req = client.request(url, { method: 'POST' }, (res) => {
+      let data = '';
+      
+      res.setEncoding('utf8');
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      res.on('end', () => {
+        resolve(JSON.parse(data).data.__schema);
+      });
+    })
+    req.write(`{"query":"query IntrospectionQuery {\n  __schema {\n    queryType {\n      name\n    }\n    mutationType {\n      name\n    }\n    subscriptionType {\n      name\n    }\n    types {\n      ...FullType\n    }\n    directives {\n      name\n      locations\n      args {\n        ...InputValue\n      }\n    }\n  }\n}\n\nfragment FullType on __Type {\n  kind\n  name\n  fields {\n    name\n    args {\n      ...InputValue\n    }\n    type {\n      ...TypeRef\n    }\n  }\n  inputFields {\n    ...InputValue\n  }\n  interfaces {\n    ...TypeRef\n  }\n  enumValues {\n    name\n  }\n  possibleTypes {\n    ...TypeRef\n  }\n}\n\nfragment InputValue on __InputValue {\n  name\n  type {\n    ...TypeRef\n  }\n  defaultValue\n}\n\nfragment TypeRef on __Type {\n  kind\n  name\n  ofType {\n    kind\n    name\n    ofType {\n      kind\n      name\n      ofType {\n        kind\n        name\n        ofType {\n          kind\n          name\n          ofType {\n            kind\n            name\n            ofType {\n              kind\n              name\n              ofType {\n                kind\n                name\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}","variables":null,"operationName":"IntrospectionQuery"}`);
+    req.end();
+  });
 
 export default (client: typeof http | typeof https) =>
-  async (api: typeof API_GRAPHQL | typeof API_SWAGGER, url: string): Promise<Descriptor> => {
+  async (api: typeof API_GRAPHQL | typeof API_SWAGGER, url: string): Promise<Descriptor | GraphQlResponse> => {
     switch (api) {
       case API_SWAGGER:
         return resolveSwaggerDescriptor(client)(url);

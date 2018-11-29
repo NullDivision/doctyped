@@ -4,7 +4,7 @@ import getDescriptor from '../src/reader';
 
 test.cb('resolves graphql requests', (t) => {
   const TEST_URL = 'http://localhost';
-  const TEST_DATA = {};
+  const TEST_DATA = { data: { __schema: {} } };
   
   getDescriptor({
     request: (url, { method }, callback) => {
@@ -25,7 +25,7 @@ test.cb('resolves graphql requests', (t) => {
       });
     }
   })('graphql', TEST_URL).then((result) => {
-    t.deepEqual(result, TEST_DATA);
+    t.deepEqual(result, TEST_DATA.data.__schema);
     t.end();
   });
 });

@@ -21,7 +21,7 @@ export default async (url: string, options: Options): Promise<Schema> => {
   const { api, format, output } = { ...DEFAULT_OPTS, ...options };
 
   const definitions = await getDescriptor(getClient(url))(api, url);
-  const schema = getSchema(definitions);
+  const schema = getSchema(api)(definitions);
 
   if (typeof output === 'string') {
     buildFiles(format, output, schema);

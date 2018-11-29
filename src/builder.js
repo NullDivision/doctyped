@@ -1,6 +1,7 @@
 // @flow
 
-import type { Descriptor, DescriptorValue } from './reader';
+import type { Descriptor, DescriptorValue, GraphQlResponse } from './reader';
+import { API_GRAPHQL, API_SWAGGER } from './constants.json';
 
 type SwaggerProperty = { $ref?: string, enum: Array<string>, items: SwaggerProperty, type: string };
 export type SchemaValue = {|
@@ -31,6 +32,7 @@ const doPropertyTransform = (required) =>
         }
         break;
       case 'array':
+        // eslint-disable-next-line no-case-declarations
         const subType = doPropertyTransform([])(`${ucName}Opts`, items);
 
         parsedType = `Array<${subType.type}>`;
@@ -70,12 +72,22 @@ const mapDefinition = (name, value): SchemaValue => {
 
 type Definitions = $PropertyType<Descriptor, 'definitions'>;
 
-export default (definitions: Definitions): Schema => {
-  const definitionEntries = Object.entries(definitions);
+export default (api) => {
+  if (api === API_GRAPHQL) {
+    return ({ types }: GraphQlResponse) => {
+      return types.map(({ name }) => ({ name }));
+    };
+  }
+  
+  if (api === API_SWAGGER) {
+    return (definitions: Definitions): Schema => {
+      const definitionEntries = Object.entries(definitions);
 
-  return definitionEntries.map(([name, value]) => {
-      if (!(value instanceof Object)) return { name: '', properties: {} };
+      return definitionEntries.map(([name, value]) => {
+          if (!(value instanceof Object)) return { name: '', properties: {} };
 
-      return mapDefinition(name, value);
-    });
-};;
+          return mapDefinition(name, value);
+        });
+    };
+  }
+};

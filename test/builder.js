@@ -3,6 +3,7 @@
 import test from 'ava';
 
 import getSchema from '../src/builder';
+import { API_GRAPHQL, API_SWAGGER } from '../src/constants.json';
 
 test('handles additional properties', (t) => {
   const TEST_DATA = {
@@ -23,5 +24,9 @@ test('handles additional properties', (t) => {
     }
   ];
 
-  t.deepEqual(getSchema(TEST_DATA), TEST_RESPONSE);
+  t.deepEqual(getSchema(API_SWAGGER)(TEST_DATA), TEST_RESPONSE);
+});
+
+test('builds from graphql types', (t) => {
+  t.deepEqual(getSchema(API_GRAPHQL)({ types: [{ name: 'Query' }] }), [{ name: 'Query' }]);
 });

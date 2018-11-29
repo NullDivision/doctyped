@@ -4,7 +4,7 @@ import test from 'ava';
 
 import getSchema from '../src/builder';
 
-test.only('handles additional properties', (t) => {
+test('handles additional properties', (t) => {
   const TEST_DATA = {
 		Order: {
       properties: { complete: { type: 'boolean', default: false } },

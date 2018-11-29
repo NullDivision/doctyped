@@ -1,6 +1,6 @@
 // @flow
 
-import type { Descriptor, DescriptorValue } from './doctyped';
+import type { Descriptor, DescriptorValue } from './reader';
 
 type SwaggerProperty = { $ref?: string, enum: Array<string>, items: SwaggerProperty, type: string };
 export type SchemaValue = {|

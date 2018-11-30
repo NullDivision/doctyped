@@ -4,6 +4,8 @@ import fs from 'fs';
 import http from 'http';
 import https from 'https';
 
+// $FlowFixMe
+import { API_GRAPHQL, API_SWAGGER } from './constants.json';
 import logger from './logger';
 
 export type PropertyValue = {| default?: mixed, type?: string |};
@@ -15,10 +17,12 @@ export type DescriptorValue = {|
   xml: {}
 |};
 export type Descriptor = {| definitions: { [string]: DescriptorValue } |};
-export type GraphQlResponse = {| types: $ReadOnlyArray<{}> |};
+type GraphQlResponseType = {
+  fields: $ReadOnlyArray<{ name: string, type: { kind: string, name: string } }>,
+  name: string
+};
+export type GraphQlResponse = {| types: $ReadOnlyArray<GraphQlResponseType> |};
 
-export const API_GRAPHQL = 'graphql';
-export const API_SWAGGER = 'swagger';
 const API_OPTS = [API_GRAPHQL, API_SWAGGER];
 
 const getLocalDescriptor = (url) => new Promise((resolve, reject) => {

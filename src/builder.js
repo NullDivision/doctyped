@@ -1,6 +1,7 @@
 // @flow
 
 import type { Descriptor, DescriptorValue, GraphQlResponse } from './reader';
+// $FlowFixMe
 import { API_GRAPHQL, API_SWAGGER } from './constants.json';
 
 type SwaggerProperty = { $ref?: string, enum: Array<string>, items: SwaggerProperty, type: string };
@@ -9,6 +10,8 @@ export type SchemaValue = {|
   properties: { [string]: {| exportTypes?: string, importTypes?: string, required: boolean, type: string |} }
 |};
 export type Schema = $ReadOnlyArray<SchemaValue>;
+
+const GQL_TOP_LEVEL_TYPE = 'OBJECT';
 
 const doPropertyTransform = (required) =>
   (name, { $ref, enum: optsList, items, type }: SwaggerProperty) => {
@@ -72,10 +75,16 @@ const mapDefinition = (name, value): SchemaValue => {
 
 type Definitions = $PropertyType<Descriptor, 'definitions'>;
 
-export default (api) => {
+export default (api: typeof API_GRAPHQL | typeof API_SWAGGER) => {
   if (api === API_GRAPHQL) {
-    return ({ types }: GraphQlResponse) => {
-      return types.map(({ name }) => ({ name }));
+    return ({ types }: GraphQlResponse): $ReadOnlyArray<SchemaValue> => {
+      return types.map(({ fields, name }) => ({
+        name,
+        properties: fields.reduce((acc, { name, type: { kind, name: fieldName } }) => ({
+          ...acc,
+          [name]: { importTypes: kind === GQL_TOP_LEVEL_TYPE ? fieldName : undefined, required: true, type: fieldName }
+        }), {})
+      }));
     };
   }
   
@@ -90,4 +99,6 @@ export default (api) => {
         });
     };
   }
+
+  throw new Error(`Invalid api type. API must be one of: ${API_GRAPHQL}, ${API_SWAGGER}`);
 };

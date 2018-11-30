@@ -6,9 +6,11 @@ import path from 'path';
 import sinon from 'sinon';
 import ts from 'typescript';
 
+// $FlowFixMe
 import descriptor from './__mocks__/swagger.json';
+// $FlowFixMe
+import { API_SWAGGER } from '../src/constants.json';
 import doctyped from '../src/doctyped';
-import { API_SWAGGER } from '../src/reader.js';
 
 const TEST_PATH_BASE = path.resolve(__dirname, '..', 'tmp');
 const SWAGGER_FILE = path.resolve(__dirname, '__mocks__/swagger.json')

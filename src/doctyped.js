@@ -4,8 +4,10 @@ import http from 'http';
 import https from 'https';
 
 import getSchema, { type Schema } from './builder';
+// $FlowFixMe
+import { API_GRAPHQL, API_SWAGGER } from './constants.json';
 import buildFiles, { FORMAT_FLOW, FORMAT_TS } from './fileGenerator';
-import getDescriptor, { API_GRAPHQL, API_SWAGGER } from './reader';
+import getDescriptor from './reader';
 
 type Options = {|
   api: typeof API_GRAPHQL | typeof API_SWAGGER,
@@ -20,6 +22,7 @@ const getClient = (url) => url.startsWith('https') ? https : http;
 export default async (url: string, options: Options): Promise<Schema> => {
   const { api, format, output } = { ...DEFAULT_OPTS, ...options };
 
+  // $FlowFixMe
   const definitions = await getDescriptor(getClient(url))(api, url);
   const schema = getSchema(api)(definitions);
 

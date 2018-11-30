@@ -3,6 +3,7 @@
 import test from 'ava';
 
 import getSchema from '../src/builder';
+// $FlowFixMe
 import { API_GRAPHQL, API_SWAGGER } from '../src/constants.json';
 
 test('handles additional properties', (t) => {
@@ -24,9 +25,21 @@ test('handles additional properties', (t) => {
     }
   ];
 
+  // $FlowFixMe
   t.deepEqual(getSchema(API_SWAGGER)(TEST_DATA), TEST_RESPONSE);
 });
 
 test('builds from graphql types', (t) => {
-  t.deepEqual(getSchema(API_GRAPHQL)({ types: [{ name: 'Query' }] }), [{ name: 'Query' }]);
+  t.deepEqual(
+    // $FlowFixMe
+    getSchema(API_GRAPHQL)({
+      types: [{ fields: [{ name: 'me', type: { kind: 'OBJECT', name: 'User' } }], name: 'Query' }]
+    }),
+    [
+      {
+        name: 'Query',
+        properties: { me: { importTypes: 'User', required: true, type: 'User' } }
+      }
+    ]
+  );
 });

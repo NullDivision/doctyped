@@ -5,9 +5,10 @@ import type { Descriptor, DescriptorValue, GraphQlResponse } from './reader';
 import { API_GRAPHQL, API_SWAGGER } from './constants.json';
 
 type SwaggerProperty = { $ref?: string, enum: Array<string>, items: SwaggerProperty, type: string };
+type PropertyValue = {| exportTypes?: string, importTypes?: string, required: boolean, type: string |};
 export type SchemaValue = {|
   name: string,
-  properties: { [string]: {| exportTypes?: string, importTypes?: string, required: boolean, type: string |} }
+  properties: { [string]: PropertyValue }
 |};
 export type Schema = $ReadOnlyArray<SchemaValue>;
 
@@ -57,7 +58,7 @@ const doPropertyTransform = (required) =>
     };
   };
 
-const mapDefinition = (name, value): SchemaValue => {
+const mapSwaggerTypes = (name, value): SchemaValue => {
   const { additionalProperties, properties, required }: DescriptorValue = value;
   const getProperty = doPropertyTransform(required);
   const propertyEntries = Object.entries(properties);
@@ -73,6 +74,18 @@ const mapDefinition = (name, value): SchemaValue => {
   return { name, properties: resolvedProperties };
 };
 
+const castGraphQLType = ({ name }) => {
+  if (name === 'ID') return 'string';
+  
+  return name.toLowerCase();
+};
+
+const mapGraphQLTypes = ({ kind, name, ofType }): PropertyValue => ({
+  importTypes: kind === GQL_TOP_LEVEL_TYPE ? name : undefined,
+  required: kind === 'NON_NULL',
+  type: kind === GQL_TOP_LEVEL_TYPE ? name : ofType ? castGraphQLType(ofType) : name
+});
+
 type Definitions = $PropertyType<Descriptor, 'definitions'>;
 
 export default (api: typeof API_GRAPHQL | typeof API_SWAGGER) => {
@@ -80,10 +93,7 @@ export default (api: typeof API_GRAPHQL | typeof API_SWAGGER) => {
     return ({ types }: GraphQlResponse): $ReadOnlyArray<SchemaValue> => {
       return types.map(({ fields, name }) => ({
         name,
-        properties: fields.reduce((acc, { name, type: { kind, name: fieldName } }) => ({
-          ...acc,
-          [name]: { importTypes: kind === GQL_TOP_LEVEL_TYPE ? fieldName : undefined, required: true, type: fieldName }
-        }), {})
+        properties: fields.reduce((acc, { name, type }) => ({ ...acc, [name]: mapGraphQLTypes(type) }), {})
       }));
     };
   }
@@ -95,7 +105,7 @@ export default (api: typeof API_GRAPHQL | typeof API_SWAGGER) => {
       return definitionEntries.map(([name, value]) => {
           if (!(value instanceof Object)) return { name: '', properties: {} };
 
-          return mapDefinition(name, value);
+          return mapSwaggerTypes(name, value);
         });
     };
   }

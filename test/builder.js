@@ -2,6 +2,7 @@
 
 import test from 'ava';
 
+import mockData from './__mocks__/graphql.json';
 import getSchema from '../src/builder';
 // $FlowFixMe
 import { API_GRAPHQL, API_SWAGGER } from '../src/constants.json';
@@ -32,13 +33,15 @@ test('handles additional properties', (t) => {
 test('builds from graphql types', (t) => {
   t.deepEqual(
     // $FlowFixMe
-    getSchema(API_GRAPHQL)({
-      types: [{ fields: [{ name: 'me', type: { kind: 'OBJECT', name: 'User' } }], name: 'Query' }]
-    }),
+    getSchema(API_GRAPHQL)(mockData.data.__schema),
     [
+      { name: 'Query', properties: { me: { importTypes: 'User', required: false, type: 'User' } } },
       {
-        name: 'Query',
-        properties: { me: { importTypes: 'User', required: true, type: 'User' } }
+        name: 'User',
+        properties: {
+          id: { importTypes: undefined, required: true, type: 'string' },
+          name: { importTypes: undefined, required: false, type: 'string' }
+        }
       }
     ]
   );

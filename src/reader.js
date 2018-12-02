@@ -17,8 +17,9 @@ export type DescriptorValue = {|
   xml: {}
 |};
 export type Descriptor = {| definitions: { [string]: DescriptorValue } |};
+type GraphQlResponseFieldType = { kind: string, name: string, ofType: ?GraphQlResponseFieldType };
 type GraphQlResponseType = {
-  fields: ?$ReadOnlyArray<{ name: string, type: { kind: string, name: string, ofType: ?{ name: ?string } } }>,
+  fields: ?$ReadOnlyArray<{ name: string, type: GraphQlResponseFieldType }>,
   kind: string,
   name: string
 };

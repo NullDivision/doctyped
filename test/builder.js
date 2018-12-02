@@ -73,10 +73,10 @@ test('builds from graphql types', (t) => {
           Product: { exportTypes: undefined, importTypes: 'Product' },
           Todo: { exportTypes: undefined, importTypes: 'Todo' },
           User: { exportTypes: undefined, importTypes: 'User' },
-          allPosts: { exportTypes: undefined, importTypes: undefined },
-          allProducts: { exportTypes: undefined, importTypes: undefined },
-          allTodos: { exportTypes: undefined, importTypes: undefined },
-          allUsers: { exportTypes: undefined, importTypes: undefined },
+          allPosts: { exportTypes: undefined, importTypes: 'Array<Post>' },
+          allProducts: { exportTypes: undefined, importTypes: 'Array<Product>' },
+          allTodos: { exportTypes: undefined, importTypes: 'Array<Todo>' },
+          allUsers: { exportTypes: undefined, importTypes: 'Array<User>' },
           me: { exportTypes: undefined, importTypes: 'User' }
         }
       },

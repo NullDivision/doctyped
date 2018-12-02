@@ -41,10 +41,10 @@ test('builds from graphql types', (t) => {
       {
         name: 'Mutation',
         properties: {
-          createTodo: { exportTypes: undefined, importTypes: undefined },
-          login: { exportTypes: undefined, importTypes: undefined },
-          register: { exportTypes: undefined, importTypes: undefined },
-          updateUser: { exportTypes: undefined, importTypes: undefined }
+          createTodo: { exportTypes: undefined, importTypes: 'Todo' },
+          login: { exportTypes: undefined, importTypes: 'AuthPayload' },
+          register: { exportTypes: undefined, importTypes: 'AuthPayload' },
+          updateUser: { exportTypes: undefined, importTypes: 'User' }
         }
       },
       {
@@ -69,18 +69,18 @@ test('builds from graphql types', (t) => {
       {
         name: 'Query',
         properties: {
-          Post: { exportTypes: undefined, importTypes: undefined },
-          Product: { exportTypes: undefined, importTypes: undefined },
-          Todo: { exportTypes: undefined, importTypes: undefined },
-          User: { exportTypes: undefined, importTypes: undefined },
+          Post: { exportTypes: undefined, importTypes: 'Post' },
+          Product: { exportTypes: undefined, importTypes: 'Product' },
+          Todo: { exportTypes: undefined, importTypes: 'Todo' },
+          User: { exportTypes: undefined, importTypes: 'User' },
           allPosts: { exportTypes: undefined, importTypes: undefined },
           allProducts: { exportTypes: undefined, importTypes: undefined },
           allTodos: { exportTypes: undefined, importTypes: undefined },
           allUsers: { exportTypes: undefined, importTypes: undefined },
-          me: { exportTypes: undefined, importTypes: undefined }
+          me: { exportTypes: undefined, importTypes: 'User' }
         }
       },
-      { name: 'Subscription', properties: { todoAdded: { exportTypes: undefined, importTypes: undefined } } },
+      { name: 'Subscription', properties: { todoAdded: { exportTypes: undefined, importTypes: 'Todo' } } },
       {
         name: 'Todo',
         properties: {

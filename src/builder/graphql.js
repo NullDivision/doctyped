@@ -3,12 +3,14 @@
 import type { SchemaValue } from '.';
 import type { GraphQlResponse } from '../reader';
 
+const EXTERNAL_TYPE = 'OBJECT';
+
 const removeIntrinsicTypes = (types) => types.filter(({ kind, name }) => kind !== 'SCALAR' && !name.startsWith('__'));
 
 const mapProperties = (fields): $PropertyType<SchemaValue, 'properties'> =>
-  (fields || []).reduce((acc, { name }) => ({
+  (fields || []).reduce((acc, { name, type: { kind, name: typeName, ...restType } }) => ({
     ...acc,
-    [name]: { exportTypes: undefined, importTypes: undefined }
+    [name]: { exportTypes: undefined, importTypes: kind === EXTERNAL_TYPE ? typeName : undefined }
   }), {});
 
 export default ({ types }: GraphQlResponse): $ReadOnlyArray<SchemaValue> =>

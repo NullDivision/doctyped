@@ -1,18 +1,10 @@
 // @flow
 
-import type { Descriptor, DescriptorValue, GraphQlResponse } from './reader';
-// $FlowFixMe
-import { API_GRAPHQL, API_SWAGGER } from './constants.json';
+import type { Schema, SchemaValue } from '.';
+import type { Descriptor, DescriptorValue } from '../reader';
 
 type SwaggerProperty = { $ref?: string, enum: Array<string>, items: SwaggerProperty, type: string };
-type PropertyValue = {| exportTypes?: string, importTypes?: string, required: boolean, type: string |};
-export type SchemaValue = {|
-  name: string,
-  properties: { [string]: PropertyValue }
-|};
-export type Schema = $ReadOnlyArray<SchemaValue>;
-
-const GQL_TOP_LEVEL_TYPE = 'OBJECT';
+type Definitions = $PropertyType<Descriptor, 'definitions'>;
 
 const doPropertyTransform = (required) =>
   (name, { $ref, enum: optsList, items, type }: SwaggerProperty) => {
@@ -74,41 +66,12 @@ const mapSwaggerTypes = (name, value): SchemaValue => {
   return { name, properties: resolvedProperties };
 };
 
-const castGraphQLType = ({ name }) => {
-  if (name === 'ID') return 'string';
-  
-  return name.toLowerCase();
-};
+export default (definitions: Definitions): Schema => {
+  const definitionEntries = Object.entries(definitions);
 
-const mapGraphQLTypes = ({ kind, name, ofType }): PropertyValue => ({
-  importTypes: kind === GQL_TOP_LEVEL_TYPE ? name : undefined,
-  required: kind === 'NON_NULL',
-  type: kind === GQL_TOP_LEVEL_TYPE ? name : ofType ? castGraphQLType(ofType) : name
-});
+  return definitionEntries.map(([name, value]) => {
+      if (!(value instanceof Object)) return { name: '', properties: {} };
 
-type Definitions = $PropertyType<Descriptor, 'definitions'>;
-
-export default (api: typeof API_GRAPHQL | typeof API_SWAGGER) => {
-  if (api === API_GRAPHQL) {
-    return ({ types }: GraphQlResponse): $ReadOnlyArray<SchemaValue> => {
-      return types.map(({ fields, name }) => ({
-        name,
-        properties: fields.reduce((acc, { name, type }) => ({ ...acc, [name]: mapGraphQLTypes(type) }), {})
-      }));
-    };
-  }
-  
-  if (api === API_SWAGGER) {
-    return (definitions: Definitions): Schema => {
-      const definitionEntries = Object.entries(definitions);
-
-      return definitionEntries.map(([name, value]) => {
-          if (!(value instanceof Object)) return { name: '', properties: {} };
-
-          return mapSwaggerTypes(name, value);
-        });
-    };
-  }
-
-  throw new Error(`Invalid api type. API must be one of: ${API_GRAPHQL}, ${API_SWAGGER}`);
+      return mapSwaggerTypes(name, value);
+    });
 };

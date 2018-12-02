@@ -5,6 +5,7 @@ import type { GraphQlResponse } from '../reader';
 
 const EXTERNAL_TYPE = 'OBJECT';
 const ARRAY_TYPE = 'LIST';
+const REQUIRED_TYPE = 'NON_NULL';
 
 const removeIntrinsicTypes = (types) => types.filter(({ kind, name }) => kind !== 'SCALAR' && !name.startsWith('__'));
 
@@ -19,7 +20,7 @@ const resolveImportType = ({ kind, name, ofType }): ?string => {
 const mapProperties = (fields): $PropertyType<SchemaValue, 'properties'> =>
   (fields || []).reduce((acc, { name, type }) => ({
     ...acc,
-    [name]: { exportTypes: undefined, importTypes: resolveImportType(type) }
+    [name]: { exportTypes: undefined, importTypes: resolveImportType(type), required: type.kind === REQUIRED_TYPE }
   }), {});
 
 export default ({ types }: GraphQlResponse): $ReadOnlyArray<SchemaValue> =>

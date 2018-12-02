@@ -37,66 +37,72 @@ test('builds from graphql types', (t) => {
     // $FlowFixMe
     getSchema(API_GRAPHQL)(mockData.data.__schema),
     [
-      { name: 'AuthPayload', properties: { token: { exportTypes: undefined, importTypes: undefined } } },
+      {
+        name: 'AuthPayload',
+        properties: { token: { exportTypes: undefined, importTypes: undefined, required: true } }
+      },
       {
         name: 'Mutation',
         properties: {
-          createTodo: { exportTypes: undefined, importTypes: 'Todo' },
-          login: { exportTypes: undefined, importTypes: 'AuthPayload' },
-          register: { exportTypes: undefined, importTypes: 'AuthPayload' },
-          updateUser: { exportTypes: undefined, importTypes: 'User' }
+          createTodo: { exportTypes: undefined, importTypes: 'Todo', required: false },
+          login: { exportTypes: undefined, importTypes: 'AuthPayload', required: false },
+          register: { exportTypes: undefined, importTypes: 'AuthPayload', required: false },
+          updateUser: { exportTypes: undefined, importTypes: 'User', required: false }
         }
       },
       {
         name: 'Post',
         properties: {
-          author: { exportTypes: undefined, importTypes: undefined },
-          body: { exportTypes: undefined, importTypes: undefined },
-          createdAt: { exportTypes: undefined, importTypes: undefined },
-          id: { exportTypes: undefined, importTypes: undefined },
-          published: { exportTypes: undefined, importTypes: undefined },
-          title: { exportTypes: undefined, importTypes: undefined }
+          author: { exportTypes: undefined, importTypes: undefined, required: true },
+          body: { exportTypes: undefined, importTypes: undefined, required: true },
+          createdAt: { exportTypes: undefined, importTypes: undefined, required: true },
+          id: { exportTypes: undefined, importTypes: undefined, required: true },
+          published: { exportTypes: undefined, importTypes: undefined, required: true },
+          title: { exportTypes: undefined, importTypes: undefined, required: true }
         }
       },
       {
         name: 'Product',
         properties: {
-          id: { exportTypes: undefined, importTypes: undefined },
-          name: { exportTypes: undefined, importTypes: undefined },
-          price: { exportTypes: undefined, importTypes: undefined }
+          id: { exportTypes: undefined, importTypes: undefined, required: true },
+          name: { exportTypes: undefined, importTypes: undefined, required: true },
+          price: { exportTypes: undefined, importTypes: undefined, required: true }
         }
       },
       {
         name: 'Query',
         properties: {
-          Post: { exportTypes: undefined, importTypes: 'Post' },
-          Product: { exportTypes: undefined, importTypes: 'Product' },
-          Todo: { exportTypes: undefined, importTypes: 'Todo' },
-          User: { exportTypes: undefined, importTypes: 'User' },
-          allPosts: { exportTypes: undefined, importTypes: 'Array<Post>' },
-          allProducts: { exportTypes: undefined, importTypes: 'Array<Product>' },
-          allTodos: { exportTypes: undefined, importTypes: 'Array<Todo>' },
-          allUsers: { exportTypes: undefined, importTypes: 'Array<User>' },
-          me: { exportTypes: undefined, importTypes: 'User' }
+          Post: { exportTypes: undefined, importTypes: 'Post', required: false },
+          Product: { exportTypes: undefined, importTypes: 'Product', required: false },
+          Todo: { exportTypes: undefined, importTypes: 'Todo', required: false },
+          User: { exportTypes: undefined, importTypes: 'User', required: false },
+          allPosts: { exportTypes: undefined, importTypes: 'Array<Post>', required: false },
+          allProducts: { exportTypes: undefined, importTypes: 'Array<Product>', required: false },
+          allTodos: { exportTypes: undefined, importTypes: 'Array<Todo>', required: false },
+          allUsers: { exportTypes: undefined, importTypes: 'Array<User>', required: false },
+          me: { exportTypes: undefined, importTypes: 'User', required: false }
         }
       },
-      { name: 'Subscription', properties: { todoAdded: { exportTypes: undefined, importTypes: 'Todo' } } },
+      {
+        name: 'Subscription',
+        properties: { todoAdded: { exportTypes: undefined, importTypes: 'Todo', required: false } }
+      },
       {
         name: 'Todo',
         properties: {
-          completed: { exportTypes: undefined, importTypes: undefined },
-          id: { exportTypes: undefined, importTypes: undefined },
-          title: { exportTypes: undefined, importTypes: undefined }
+          completed: { exportTypes: undefined, importTypes: undefined, required: true },
+          id: { exportTypes: undefined, importTypes: undefined, required: true },
+          title: { exportTypes: undefined, importTypes: undefined, required: true }
         }
       },
       {
         name: 'User',
         properties: {
-          avatar: { exportTypes: undefined, importTypes: undefined },
-          email: { exportTypes: undefined, importTypes: undefined },
-          firstName: { exportTypes: undefined, importTypes: undefined },
-          id: { exportTypes: undefined, importTypes: undefined },
-          lastName: { exportTypes: undefined, importTypes: undefined }
+          avatar: { exportTypes: undefined, importTypes: undefined, required: false },
+          email: { exportTypes: undefined, importTypes: undefined, required: true },
+          firstName: { exportTypes: undefined, importTypes: undefined, required: true },
+          id: { exportTypes: undefined, importTypes: undefined, required: true },
+          lastName: { exportTypes: undefined, importTypes: undefined, required: true }
         }
       }
     ]

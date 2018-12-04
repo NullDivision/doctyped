@@ -11,10 +11,7 @@ const removeIntrinsicTypes = (types) => types.filter(({ kind, name }) => kind !=
 
 const resolveImportType = ({ kind, name, ofType }): ?string => {
   if (kind === EXTERNAL_TYPE) return name;
-  if (kind === ARRAY_TYPE) {
-    if (ofType) return `Array<${resolveImportType(ofType) || '*'}>`;
-    return 'Array<*>';
-  }
+  if (kind === ARRAY_TYPE && ofType) return resolveImportType(ofType);
 };
 
 const mapProperties = (fields): $PropertyType<SchemaValue, 'properties'> =>

@@ -45,8 +45,8 @@
     "@babel/preset-flow": "^7.0.0",
     "@babel/register": "^7.0.0",
     "ava": "^1.0.1",
-    "flow-bin": "^0.86.0",
-    "flow-parser": "^0.86.0",
+    "flow-bin": "^0.90.0",
+    "flow-parser": "^0.90.0",
     "sinon": "^7.1.1",
     "typescript": "^3.1.6"
   }

@@ -1,40 +1,14 @@
 // @flow
-
 import test from 'ava';
 
 // $FlowFixMe
-import mockData from './__mocks__/graphql.json';
-import getSchema from '../src/builder';
-// $FlowFixMe
-import { API_GRAPHQL, API_SWAGGER } from '../src/constants.json';
-
-test('handles additional properties', (t) => {
-  const TEST_DATA = {
-		Order: {
-      properties: { complete: { type: 'boolean', default: false } },
-      additionalProperties: { type: 'number' },
-			type: 'object',
-			xml: { name: 'Order' }
-		}
-	};
-  const TEST_RESPONSE = [
-    {
-      name: 'Order',
-      properties: {
-        complete: { exportTypes: undefined, importTypes: undefined, required: false, type: 'boolean' },
-        '[string]': { exportTypes: undefined, importTypes: undefined, required: false, type: 'number' }
-      }
-    }
-  ];
-
-  // $FlowFixMe
-  t.deepEqual(getSchema(API_SWAGGER)(TEST_DATA), TEST_RESPONSE);
-});
+import mockData from '../__mocks__/graphql.json';
+import buildGraphql from '../../src/builder/graphql';
 
 // example taken from https://fakerql.com/
 test('builds from graphql types', (t) => {
   t.deepEqual(
-    getSchema(API_GRAPHQL)(mockData.data.__schema),
+    buildGraphql(mockData.data.__schema),
     [
       {
         name: 'AuthPayload',
@@ -109,18 +83,20 @@ test('builds from graphql types', (t) => {
 });
 
 test('resolves basic propert structure', (t) => {
-  const queryType = getSchema(API_GRAPHQL)(mockData.data.__schema).find(({ name }) => name === 'Query');
-  
+  const queryType = buildGraphql(mockData.data.__schema).find(({ name }) => name === 'Query');
+
   t.truthy(queryType);
 
-  if (!queryType) return;
-  
+  if (!queryType) throw new Error('Not an object');
+
   t.true(
-    Object.values(queryType.properties).every((property) =>
-      'exportTypes' in property &&
-      'importTypes' in property &&
-      'required' in property
-      && 'type' in property
-    )
+    Object.values(queryType.properties).every((property) => {
+      if (!(property instanceof Object)) throw new Error('Not an object');
+
+      return 'exportTypes' in property &&
+        'importTypes' in property &&
+        'required' in property &&
+        'type' in property;
+    })
   );
 });

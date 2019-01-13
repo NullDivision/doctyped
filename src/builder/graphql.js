@@ -6,19 +6,20 @@ import type { GraphQlResponse } from '../reader';
 const EXTERNAL_TYPE = 'OBJECT';
 const ARRAY_TYPE = 'LIST';
 const REQUIRED_TYPE = 'NON_NULL';
+const SUB_TYPES = [ARRAY_TYPE, REQUIRED_TYPE];
 
 const removeIntrinsicTypes = (types) => types.filter(({ kind, name }) => kind !== 'SCALAR' && !name.startsWith('__'));
 
 const resolveImportType = ({ kind, name, ofType }): ?string => {
   if (kind === EXTERNAL_TYPE) return name;
-  if (kind === ARRAY_TYPE || kind === REQUIRED_TYPE) return resolveImportType(ofType);
+  if (ofType && SUB_TYPES.includes(kind)) return resolveImportType(ofType);
 };
 
 const resolveType = ({ kind, name, ofType }): string => {
   if (kind === EXTERNAL_TYPE) return name;
-  if (kind === ARRAY_TYPE) return `Array<${resolveType(ofType)}>`;
-  if (kind === REQUIRED_TYPE) return resolveType(ofType);
-  
+  if (ofType && kind === ARRAY_TYPE) return `Array<${resolveType(ofType)}>`;
+  if (ofType && kind === REQUIRED_TYPE) return resolveType(ofType);
+
   return ['String', 'ID'].includes(name) ? 'string' : name === 'Boolean' ? 'boolean' : name;
 }
 

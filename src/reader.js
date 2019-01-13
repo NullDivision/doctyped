@@ -70,8 +70,10 @@ const resolveGraphqlDescriptor = (client: typeof http | typeof https) =>
   (url): Promise<GraphQlResponse> => new Promise((resolve) => {
     // $FlowFixMe
     const req = client.request(url, { method: 'POST' }, (res) => {
+      if (res.statusCode >= 400) throw new Error(res.statusMessage);
+
       let data = '';
-      
+
       res.setEncoding('utf8');
       res.on('data', (chunk) => {
         data += chunk;

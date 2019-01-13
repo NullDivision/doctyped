@@ -20,10 +20,12 @@ const DEFAULT_OPTS = { format: FORMAT_FLOW, output: null };
 const getClient = (url) => url.startsWith('https') ? https : http;
 
 export default async (url: string, options: Options): Promise<Schema> => {
-  const { api, format, output } = { ...DEFAULT_OPTS, ...options };
+  const { api, authorization, format, output } = { ...DEFAULT_OPTS, ...options };
+  const headers = authorization ? { Authorization: authorization } : {};
 
+  const describe = getDescriptor(getClient(url));
+  const definitions = await describe(api, { headers, uri: url });
   // $FlowFixMe
-  const definitions = await getDescriptor(getClient(url))(api, url);
   const schema = getSchema(api)(definitions);
 
   if (typeof output === 'string') {

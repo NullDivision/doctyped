@@ -8,8 +8,8 @@ test.cb('resolves graphql requests', (t) => {
   const TEST_DATA = { data: { __schema: {} } };
 
   getDescriptor({
-    request: (url, { method }, callback) => {
-      t.is(url, TEST_URL);
+    request: ({ method, uri }, callback) => {
+      t.is(uri, TEST_URL);
       t.is(method, 'POST');
 
       callback({
@@ -25,7 +25,7 @@ test.cb('resolves graphql requests', (t) => {
         setEncoding: () => {}
       });
     }
-  })(API_GRAPHQL, TEST_URL).then((result) => {
+  })(API_GRAPHQL, { uri: TEST_URL }).then((result) => {
     t.deepEqual(result, TEST_DATA.data.__schema);
     t.end();
   });
@@ -35,7 +35,7 @@ test.cb('notifies about error messages', (t) => {
   const TEST_STATUS = "I'm a teapot";
 
   getDescriptor({
-    request: (url, opts, callback) => {
+    request: (url, callback) => {
       callback({
         on: () => null,
         setEncoding: () => null,

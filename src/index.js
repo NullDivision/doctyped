@@ -14,7 +14,8 @@ yargs
   .version(version)
   .alias('version', 'v')
   .option('output', { alias: 'o' })
-  .option('api', { alias: 'a' })
+  .option('api', { alias: 'a', demand: true })
+  .option('authorization')
   .describe('output', 'Destination directory')
   .command(
     '$0 <file>',

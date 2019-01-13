@@ -1,6 +1,7 @@
 import test from 'ava';
 import flowParser from 'flow-parser';
 import fs from 'fs';
+import http from 'http';
 import https from 'https';
 import path from 'path';
 import sinon from 'sinon';
@@ -9,7 +10,7 @@ import ts from 'typescript';
 // $FlowFixMe
 import descriptor from './__mocks__/swagger.json';
 // $FlowFixMe
-import { API_SWAGGER } from '../src/constants.json';
+import { API_GRAPHQL, API_SWAGGER } from '../src/constants.json';
 import doctyped from '../src/doctyped';
 
 const TEST_PATH_BASE = path.resolve(__dirname, '..', 'tmp');
@@ -182,5 +183,30 @@ test.cb('dedups imports from same files', (t) => {
       t.is(result.match(/Category.js/g).length, 1);
       t.end();
     });
+  });
+});
+
+test.cb('sets authorization token', (t) => {
+  const TEST_AUTH = 'test auth';
+
+  sinon.stub(http, 'request').callsFake((opts, callback) => {
+    try {
+      t.truthy(opts.hasOwnProperty('headers'));
+      t.truthy(opts.headers.hasOwnProperty('Authorization'));
+      t.end();
+    } catch (e) {
+      console.log(e);
+    }
+
+    callback({ on: (type, callback) => {
+      if (type === 'data') callback('{ "data": { "__schema": { "types": [] } } }');
+      if (type === 'end') callback();
+    }, setEncoding: () => null });
+
+    return { end: () => null, write: () => null };
+  });
+
+  doctyped('test-url', { api: API_GRAPHQL, authorization: TEST_AUTH }).catch((err) => {
+    console.log(err);
   });
 });

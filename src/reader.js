@@ -67,9 +67,11 @@ const resolveSwaggerDescriptor = (client) => async (url): Promise<Descriptor> =>
 };
 
 const resolveGraphqlDescriptor = (client: typeof http | typeof https) =>
-  (url): Promise<GraphQlResponse> => new Promise((resolve) => {
-    // $FlowFixMe
-    const req = client.request(url, { method: 'POST' }, (res) => {
+  ({ uri, ...options }): Promise<GraphQlResponse> => new Promise((resolve) => {
+    const opts = { method: 'POST', rejectUnauthorized: false, };
+    const urlOpts = new URL(uri);
+
+    const req = client.request({ ...opts, ...options, ...urlOpts }, (res) => {
       if (res.statusCode >= 400) throw new Error(res.statusMessage);
 
       let data = '';
@@ -86,13 +88,17 @@ const resolveGraphqlDescriptor = (client: typeof http | typeof https) =>
     req.end();
   });
 
+type ApiType = typeof API_GRAPHQL | typeof API_SWAGGER;
+type Options = {| headers?: {}, uri: string |};
+type ResponseType = Descriptor | GraphQlResponse;
+
 export default (client: typeof http | typeof https) =>
-  async (api: typeof API_GRAPHQL | typeof API_SWAGGER, url: string): Promise<Descriptor | GraphQlResponse> => {
+  async (api: ApiType, options: Options): Promise<ResponseType> => {
     switch (api) {
       case API_SWAGGER:
-        return resolveSwaggerDescriptor(client)(url);
+        return resolveSwaggerDescriptor(client)(options.uri);
       case API_GRAPHQL:
-        return resolveGraphqlDescriptor(client)(url);
+        return resolveGraphqlDescriptor(client)(options);
       default:
         throw new Error(`Invalid api type '${api}' provided. Type must be one of: ${API_OPTS.join(', ')}`)
     }

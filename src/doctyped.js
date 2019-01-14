@@ -7,10 +7,11 @@ import getSchema, { type Schema } from './builder';
 // $FlowFixMe
 import { API_GRAPHQL, API_SWAGGER } from './constants.json';
 import buildFiles, { FORMAT_FLOW, FORMAT_TS } from './fileGenerator';
-import getDescriptor from './reader';
+import { getDescriptorResolver } from './reader';
 
 type Options = {|
   api: typeof API_GRAPHQL | typeof API_SWAGGER,
+  authorization?: string,
   format?: typeof FORMAT_FLOW | typeof FORMAT_TS,
   output?: string
 |};
@@ -23,7 +24,7 @@ export default async (url: string, options: Options): Promise<Schema> => {
   const { api, authorization, format, output } = { ...DEFAULT_OPTS, ...options };
   const headers = authorization ? { Authorization: authorization } : {};
 
-  const describe = getDescriptor(getClient(url));
+  const describe = getDescriptorResolver(getClient(url));
   const definitions = await describe(api, { headers, uri: url });
   // $FlowFixMe
   const schema = getSchema(api)(definitions);

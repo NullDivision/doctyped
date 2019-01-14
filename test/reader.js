@@ -1,13 +1,18 @@
 import test from 'ava';
+import request from 'request-promise-native';
+import sinon from 'sinon';
 
 import { API_GRAPHQL } from '../src/constants.json';
-import getDescriptor from '../src/reader';
+import { getDescriptorResolver } from '../src/reader';
+
+const mockRequest = sinon.stub(request, 'Request');
 
 test.cb('resolves graphql requests', (t) => {
   const TEST_URL = 'http://localhost';
   const TEST_DATA = { data: { __schema: {} } };
+  mockRequest.returns(TEST_DATA);
 
-  getDescriptor({
+  getDescriptorResolver({
     request: ({ method, uri }, callback) => {
       t.is(uri, TEST_URL);
       t.is(method, 'POST');
@@ -33,8 +38,9 @@ test.cb('resolves graphql requests', (t) => {
 
 test.cb('notifies about error messages', (t) => {
   const TEST_STATUS = "I'm a teapot";
+  mockRequest.throws(new Error(TEST_STATUS));
 
-  getDescriptor({
+  getDescriptorResolver({
     request: (url, callback) => {
       callback({
         on: () => null,

@@ -75,16 +75,15 @@ const resolveGraphqlDescriptor = (client: typeof http | typeof https) =>
         variables: null,
         operationName: 'IntrospectionQuery'
       },
-      insecure: true,
       json: true,
       method: 'POST',
       rejectUnauthorized: false
     };
 
     try {
-      return await request({ ...opts, ...options });
+      const { data: { __schema } } = await request({ ...opts, ...options });
+      return __schema;
     } catch (err) {
-      console.log(err)
       throw new Error(err.message);
     }
   };
@@ -93,7 +92,7 @@ type ApiType = typeof API_GRAPHQL | typeof API_SWAGGER;
 type Options = {| headers?: {}, uri: string |};
 type ResponseType = Descriptor | GraphQlResponse;
 
-export default (client: typeof http | typeof https) =>
+export const getDescriptorResolver = (client: typeof http | typeof https) =>
   async (api: ApiType, options: Options): Promise<ResponseType> => {
     switch (api) {
       case API_SWAGGER:

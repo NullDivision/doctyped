@@ -12,6 +12,7 @@ import descriptor from './__mocks__/swagger.json';
 // $FlowFixMe
 import { API_GRAPHQL, API_SWAGGER } from '../src/constants.json';
 import doctyped from '../src/doctyped';
+import * as reader from '../src/reader';
 
 const TEST_PATH_BASE = path.resolve(__dirname, '..', 'tmp');
 const SWAGGER_FILE = path.resolve(__dirname, '__mocks__/swagger.json')
@@ -189,24 +190,23 @@ test.cb('dedups imports from same files', (t) => {
 test.cb('sets authorization token', (t) => {
   const TEST_AUTH = 'test auth';
 
-  sinon.stub(http, 'request').callsFake((opts, callback) => {
-    try {
-      t.truthy(opts.hasOwnProperty('headers'));
-      t.truthy(opts.headers.hasOwnProperty('Authorization'));
-      t.end();
-    } catch (e) {
-      console.log(e);
-    }
+  try {
+    sinon.stub(reader, 'getDescriptorResolver').callsFake(() => (api, opts) => {
+      try {
+        t.truthy(opts.hasOwnProperty('headers'));
+        t.truthy(opts.headers.hasOwnProperty('Authorization'));
+        t.end();
 
-    callback({ on: (type, callback) => {
-      if (type === 'data') callback('{ "data": { "__schema": { "types": [] } } }');
-      if (type === 'end') callback();
-    }, setEncoding: () => null });
+        return { types: [] };
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  } catch (e) {
+    console.log(e);
+  }
 
-    return { end: () => null, write: () => null };
-  });
-
-  doctyped('test-url', { api: API_GRAPHQL, authorization: TEST_AUTH }).catch((err) => {
+  doctyped('http://test-url', { api: API_GRAPHQL, authorization: TEST_AUTH }).catch((err) => {
     console.log(err);
   });
 });

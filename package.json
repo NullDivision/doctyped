@@ -8,7 +8,7 @@
     "doctyped": "dist/index.js"
   },
   "name": "doctyped",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "description": "Swagger-enabled flow types generator",
   "main": "index.js",
   "directories": {

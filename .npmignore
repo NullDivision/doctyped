@@ -1,8 +1,11 @@
+flow-typed
 src
 test
 tmp
 .babelrc
+.eslintrc
 .flowconfig
 .travis.yml
+.vscode
 package-lock.json
 yarn.lock

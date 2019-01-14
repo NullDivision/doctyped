@@ -3,6 +3,7 @@
 import fs from 'fs';
 import http from 'http';
 import https from 'https';
+import request from 'request-promise-native';
 
 // $FlowFixMe
 import { API_GRAPHQL, API_SWAGGER } from './constants.json';
@@ -67,26 +68,26 @@ const resolveSwaggerDescriptor = (client) => async (url): Promise<Descriptor> =>
 };
 
 const resolveGraphqlDescriptor = (client: typeof http | typeof https) =>
-  ({ uri, ...options }): Promise<GraphQlResponse> => new Promise((resolve) => {
-    const opts = { method: 'POST', rejectUnauthorized: false, };
-    const urlOpts = new URL(uri);
+  async (options): Promise<GraphQlResponse> => {
+    const opts = {
+      body: {
+        query: 'query IntrospectionQuery {\n  __schema {\n    queryType {\n      name\n    }\n    mutationType {\n      name\n    }\n    subscriptionType {\n      name\n    }\n    types {\n      ...FullType\n    }\n    directives {\n      name\n      locations\n      args {\n        ...InputValue\n      }\n    }\n  }\n}\n\nfragment FullType on __Type {\n  kind\n  name\n  fields {\n    name\n    args {\n      ...InputValue\n    }\n    type {\n      ...TypeRef\n    }\n  }\n  inputFields {\n    ...InputValue\n  }\n  interfaces {\n    ...TypeRef\n  }\n  enumValues {\n    name\n  }\n  possibleTypes {\n    ...TypeRef\n  }\n}\n\nfragment InputValue on __InputValue {\n  name\n  type {\n    ...TypeRef\n  }\n  defaultValue\n}\n\nfragment TypeRef on __Type {\n  kind\n  name\n  ofType {\n    kind\n    name\n    ofType {\n      kind\n      name\n      ofType {\n        kind\n        name\n        ofType {\n          kind\n          name\n          ofType {\n            kind\n            name\n            ofType {\n              kind\n              name\n              ofType {\n                kind\n                name\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}',
+        variables: null,
+        operationName: 'IntrospectionQuery'
+      },
+      insecure: true,
+      json: true,
+      method: 'POST',
+      rejectUnauthorized: false
+    };
 
-    const req = client.request({ ...opts, ...options, ...urlOpts }, (res) => {
-      if (res.statusCode >= 400) throw new Error(res.statusMessage);
-
-      let data = '';
-
-      res.setEncoding('utf8');
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
-      res.on('end', () => {
-        resolve(JSON.parse(data).data.__schema);
-      });
-    })
-    req.write(`{"query":"query IntrospectionQuery {\n  __schema {\n    queryType {\n      name\n    }\n    mutationType {\n      name\n    }\n    subscriptionType {\n      name\n    }\n    types {\n      ...FullType\n    }\n    directives {\n      name\n      locations\n      args {\n        ...InputValue\n      }\n    }\n  }\n}\n\nfragment FullType on __Type {\n  kind\n  name\n  fields {\n    name\n    args {\n      ...InputValue\n    }\n    type {\n      ...TypeRef\n    }\n  }\n  inputFields {\n    ...InputValue\n  }\n  interfaces {\n    ...TypeRef\n  }\n  enumValues {\n    name\n  }\n  possibleTypes {\n    ...TypeRef\n  }\n}\n\nfragment InputValue on __InputValue {\n  name\n  type {\n    ...TypeRef\n  }\n  defaultValue\n}\n\nfragment TypeRef on __Type {\n  kind\n  name\n  ofType {\n    kind\n    name\n    ofType {\n      kind\n      name\n      ofType {\n        kind\n        name\n        ofType {\n          kind\n          name\n          ofType {\n            kind\n            name\n            ofType {\n              kind\n              name\n              ofType {\n                kind\n                name\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}","variables":null,"operationName":"IntrospectionQuery"}`);
-    req.end();
-  });
+    try {
+      return await request({ ...opts, ...options });
+    } catch (err) {
+      console.log(err)
+      throw new Error(err.message);
+    }
+  };
 
 type ApiType = typeof API_GRAPHQL | typeof API_SWAGGER;
 type Options = {| headers?: {}, uri: string |};

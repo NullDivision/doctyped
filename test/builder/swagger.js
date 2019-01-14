@@ -1,10 +1,9 @@
 // @flow
-
 import test from 'ava';
 
-import getSchema from '../src/builder';
+import buildSwagger from '../../src/builder/swagger';
 
-test.only('handles additional properties', (t) => {
+test('handles additional properties', (t) => {
   const TEST_DATA = {
 		Order: {
       properties: { complete: { type: 'boolean', default: false } },
@@ -23,5 +22,6 @@ test.only('handles additional properties', (t) => {
     }
   ];
 
-  t.deepEqual(getSchema(TEST_DATA), TEST_RESPONSE);
+  // $FlowFixMe
+  t.deepEqual(buildSwagger(TEST_DATA), TEST_RESPONSE);
 });

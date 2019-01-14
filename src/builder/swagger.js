@@ -1,13 +1,10 @@
 // @flow
 
-import type { Descriptor, DescriptorValue } from './doctyped';
+import type { Schema, SchemaValue } from '.';
+import type { Descriptor, DescriptorValue } from '../reader';
 
 type SwaggerProperty = { $ref?: string, enum: Array<string>, items: SwaggerProperty, type: string };
-export type SchemaValue = {|
-  name: string,
-  properties: { [string]: {| exportTypes?: string, importTypes?: string, required: boolean, type: string |} }
-|};
-export type Schema = $ReadOnlyArray<SchemaValue>;
+type Definitions = $PropertyType<Descriptor, 'definitions'>;
 
 const doPropertyTransform = (required) =>
   (name, { $ref, enum: optsList, items, type }: SwaggerProperty) => {
@@ -31,6 +28,7 @@ const doPropertyTransform = (required) =>
         }
         break;
       case 'array':
+        // eslint-disable-next-line no-case-declarations
         const subType = doPropertyTransform([])(`${ucName}Opts`, items);
 
         parsedType = `Array<${subType.type}>`;
@@ -52,7 +50,7 @@ const doPropertyTransform = (required) =>
     };
   };
 
-const mapDefinition = (name, value): SchemaValue => {
+const mapSwaggerTypes = (name, value): SchemaValue => {
   const { additionalProperties, properties, required }: DescriptorValue = value;
   const getProperty = doPropertyTransform(required);
   const propertyEntries = Object.entries(properties);
@@ -68,14 +66,12 @@ const mapDefinition = (name, value): SchemaValue => {
   return { name, properties: resolvedProperties };
 };
 
-type Definitions = $PropertyType<Descriptor, 'definitions'>;
-
 export default (definitions: Definitions): Schema => {
   const definitionEntries = Object.entries(definitions);
 
   return definitionEntries.map(([name, value]) => {
       if (!(value instanceof Object)) return { name: '', properties: {} };
 
-      return mapDefinition(name, value);
+      return mapSwaggerTypes(name, value);
     });
-};;
+};

@@ -20,7 +20,8 @@ const getAccumulatedExtras = (properties) =>
       
       const { exportTypes: newExport, importTypes: newImport, ...rest } = value;
       const result = {
-        exportTypes: newExport ? [...accExports, { name: name[0].toUpperCase() + name.slice(1), type: newExport }] : accExports,
+        exportTypes: newExport ? [...accExports, { name: name[0].toUpperCase() + name.slice(1), type: newExport }]
+                               : accExports,
         importTypes: newImport && !accImports.includes(newImport) ? [...accImports, newImport] : accImports
       };
 

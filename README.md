@@ -2,10 +2,10 @@
 
 ## Description
 
-A tool created allowing auto-generation of flow types from API documentation descriptions.
+Auto-generate Flow or TypeScript types from API documentation descriptions.
 
 ## Installing
-`yarn add -D doctyped`
+`yarn add -D doctyped` or `npm install --save-dev doctyped`
 
 ## Usage
 ### Node
@@ -19,5 +19,5 @@ This is useful if we want to run checks against types in the runtime environment
 Optionally, we can pass an options object `{ output: '/someoutput/path' }`as the second argument that will generate `js.flow` files.
 ### CLI
 ```
-yarn doctyped -o /path/to/output /path/to/descriptor
+yarn doctyped -a <flow-or-ts> -o <destination-directory> <api-url>
 ```

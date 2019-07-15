@@ -1,15 +1,10 @@
-// @flow
-
 import test from 'ava';
 
-// $FlowFixMe
-import getSchema from '../../src/builder';
-import buildGraphql from '../../src/builder/graphql';
-import buildSwagger from '../../src/builder/swagger';
-// $FlowFixMe
-import { API_GRAPHQL, API_SWAGGER } from '../../src/constants.json';
+import { API_TYPE, build } from '../../dist/builder';
+import buildGraphql from '../../dist/builder/graphql';
+import buildSwagger from '../../dist/builder/swagger';
 
 test('resolves selected API', (t) => {
-  t.is(getSchema(API_GRAPHQL), buildGraphql);
-  t.is(getSchema(API_SWAGGER), buildSwagger);
+  t.is(build(API_TYPE.GRAPHQL), buildGraphql);
+  t.is(build(API_TYPE.SWAGGER), buildSwagger);
 });

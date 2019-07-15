@@ -1,7 +1,5 @@
-// @flow
-
-import type { SchemaValue, SchemaValueProperties } from '.';
-import type { GraphQlResponse } from '../reader';
+import { SchemaValue, SchemaValueProperties } from '.';
+import { GraphQlResponse } from '../reader';
 
 const EXTERNAL_TYPE = 'OBJECT';
 const ARRAY_TYPE = 'LIST';
@@ -10,7 +8,7 @@ const SUB_TYPES = [ARRAY_TYPE, REQUIRED_TYPE];
 
 const removeIntrinsicTypes = (types) => types.filter(({ kind, name }) => kind !== 'SCALAR' && !name.startsWith('__'));
 
-const resolveImportType = ({ kind, name, ofType }): ?string => {
+const resolveImportType = ({ kind, name, ofType }): string => {
   if (kind === EXTERNAL_TYPE) return name;
   if (ofType && SUB_TYPES.includes(kind)) return resolveImportType(ofType);
 };
@@ -34,7 +32,7 @@ const mapProperties = (fields): SchemaValueProperties =>
     }
   }), {});
 
-export default ({ types }: GraphQlResponse): $ReadOnlyArray<SchemaValue> =>
+export default ({ types }: GraphQlResponse): ReadonlyArray<SchemaValue> =>
   removeIntrinsicTypes(types)
     .sort(({ name: nameA }, { name: nameB }) => nameA && nameA.localeCompare(nameB) || 0)
     .map(({ fields, name }) => ({ name, properties: mapProperties(fields) }));

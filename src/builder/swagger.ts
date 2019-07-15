@@ -1,10 +1,12 @@
-// @flow
+import { SchemaValue, Schema } from '.';
+import { Descriptor, DescriptorValue } from '../reader';
 
-import type { Schema, SchemaValue } from '.';
-import type { Descriptor, DescriptorValue } from '../reader';
-
-type SwaggerProperty = { $ref?: string, enum: Array<string>, items: SwaggerProperty, type: string };
-type Definitions = $PropertyType<Descriptor, 'definitions'>;
+interface SwaggerProperty {
+  $ref?: string;
+  enum: Array<string>;
+  items: SwaggerProperty;
+  type: string;
+}
 
 const doPropertyTransform = (required) =>
   (name, { $ref, enum: optsList, items, type }: SwaggerProperty) => {
@@ -50,11 +52,9 @@ const doPropertyTransform = (required) =>
     };
   };
 
-const mapSwaggerTypes = (name, value): SchemaValue => {
-  // $FlowFixMe
-  const { additionalProperties, properties, required }: DescriptorValue = value;
+const mapSwaggerTypes = (name, value: DescriptorValue): SchemaValue => {
+  const { additionalProperties, properties, required } = value;
   const getProperty = doPropertyTransform(required);
-  // $FlowFixMe
   const propertyEntries = Object.entries(properties);
   const mergedProperties = additionalProperties ? [...propertyEntries, ['[string]', additionalProperties]]
                                                 : propertyEntries;
@@ -62,14 +62,14 @@ const mapSwaggerTypes = (name, value): SchemaValue => {
   const resolvedProperties = mergedProperties.reduce((acc, [propName, prop]) => {
     if (!(prop instanceof Object)) return acc;
 
-    // $FlowFixMe
+    // @ts-ignore
     return { ...acc, [propName]: getProperty(propName, prop) };
   }, {});
 
   return { name, properties: resolvedProperties };
 };
 
-export default (definitions: Definitions): Schema => {
+export default (definitions: Descriptor['definitions']): Schema => {
   const definitionEntries = Object.entries(definitions);
 
   return definitionEntries.map(([name, value]) => {

@@ -15,8 +15,10 @@
     "test": "test"
   },
   "scripts": {
-    "build": "babel src --out-dir dist --copy-files",
-    "pretest": "rm -rf ./tmp/*",
+    "build:clear": "rm -rfv ./dist/*",
+    "build:copy": "mkdir -p ./dist/templates && cp -r ./src/templates ./dist",
+    "build": "npm run build:clear && npm run build:copy && tsc",
+    "pretest": "rm -rf ./tmp/* && npm run build",
     "test": "ava"
   },
   "repository": {
@@ -46,6 +48,9 @@
     "@babel/preset-env": "^7.2.3",
     "@babel/preset-flow": "^7.0.0",
     "@babel/register": "^7.0.0",
+    "@types/ejs": "^2.6.3",
+    "@types/request-promise-native": "^1.0.16",
+    "@types/yargs": "^13.0.0",
     "ava": "^2.2.0",
     "flow-bin": "^0.102.0",
     "flow-parser": "^0.102.0",

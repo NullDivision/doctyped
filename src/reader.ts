@@ -1,47 +1,48 @@
-// @flow
+import { promises as fs } from 'fs';
+import * as http from 'http';
+import * as https from 'https';
+import { post as request } from 'request-promise-native';
 
-import fs from 'fs';
-import http from 'http';
-import https from 'https';
-import request from 'request-promise-native';
-
-// $FlowFixMe
-import { API_GRAPHQL, API_SWAGGER } from './constants.json';
+import { API_TYPE } from './builder';
 import logger from './logger';
 
-export type PropertyValue = {| default?: mixed, type?: string |};
-export type DescriptorValue = {|
-  additionalProperties: PropertyValue,
-  properties?: { [string]: PropertyValue },
-  required?: $ReadOnlyArray<string>,
-  type: string,
-  xml: {}
-|};
-export type Descriptor = {| definitions: { [string]: DescriptorValue } |};
-type GraphQlResponseFieldType = { kind: string, name: string, ofType: ?GraphQlResponseFieldType };
-type GraphQlResponseType = {
-  fields: ?$ReadOnlyArray<{ name: string, type: GraphQlResponseFieldType }>,
-  kind: string,
-  name: string
-};
-export type GraphQlResponse = {| types: $ReadOnlyArray<GraphQlResponseType> |};
+export interface PropertyValue { default?: unknown; type?: string }
+export interface DescriptorValue {
+  additionalProperties: PropertyValue;
+  properties?: { [key: string]: PropertyValue };
+  required?: ReadonlyArray<string>;
+  type: string;
+  xml: {};
+}
+export interface Descriptor { definitions: { [key: string]: DescriptorValue } }
+interface GraphQlResponseFieldType {
+  kind: string;
+  name: string;
+  ofType?: GraphQlResponseFieldType;
+}
+interface GraphQlResponseType {
+  fields?: ReadonlyArray<{ name: string, type: GraphQlResponseFieldType }>;
+  kind: string;
+  name: string;
+}
+export interface GraphQlResponse { types: ReadonlyArray<GraphQlResponseType> }
 
-const API_OPTS = [API_GRAPHQL, API_SWAGGER];
+const API_OPTS = Object.values(API_TYPE);
 
-const getLocalDescriptor = (url) => new Promise((resolve, reject) => {
-  fs.readFile(url, (err, data) => {
-    try {
-      if (!data) {
-        throw err;
-      }
+async function getLocalDescriptor(url) {
+  try {
+    const data = await fs.readFile(url);
 
-      resolve(JSON.parse(data.toString()));
-    } catch (e) {
-      logger(e.message);
-      reject(new Error('Could not resolve path locally'));
+    if (!data) {
+      throw new Error('Descriptor path empty');
     }
-  });
-});
+
+    return JSON.parse(data.toString());
+  } catch (e) {
+    logger(e.message);
+    throw new Error('Could not resolve path locally');
+  }
+}
 
 const getRemoteDescriptor = (client: typeof http | typeof https) => (url) => new Promise((resolve) => {
   client.get(url, (response) => {
@@ -55,15 +56,26 @@ const getRemoteDescriptor = (client: typeof http | typeof https) => (url) => new
   });
 });
 
+interface DescriptorResponse { definitions: Descriptor }
+
+function isDescriptor(descriptor): descriptor is DescriptorResponse {
+  return 'definitions' in descriptor;
+}
+
 const resolveSwaggerDescriptor = (client) => async (url): Promise<Descriptor> => {
   try {
-    const { definitions } = await getLocalDescriptor(url);
+    const descriptor = await getLocalDescriptor(url);
 
-    return definitions;
+    if (isDescriptor(descriptor)) {
+      return descriptor.definitions;
+    }
   } catch (e) {
     logger(e.message);
-    const { definitions } = await getRemoteDescriptor(client)(url);
-    return definitions;
+    const descriptor = await getRemoteDescriptor(client)(url);
+
+    if (isDescriptor(descriptor)) {
+      return descriptor.definitions;
+    }
   }
 };
 
@@ -76,7 +88,6 @@ const resolveGraphqlDescriptor = (client: typeof http | typeof https) =>
         operationName: 'IntrospectionQuery'
       },
       json: true,
-      method: 'POST',
       rejectUnauthorized: false
     };
 
@@ -88,16 +99,15 @@ const resolveGraphqlDescriptor = (client: typeof http | typeof https) =>
     }
   };
 
-type ApiType = typeof API_GRAPHQL | typeof API_SWAGGER;
-type Options = {| headers?: {}, uri: string |};
-type ResponseType = Descriptor | GraphQlResponse;
+interface Options { headers?: {}; uri: string }
+export type ResponseType = Descriptor | GraphQlResponse;
 
 export const getDescriptorResolver = (client: typeof http | typeof https) =>
-  async (api: ApiType, options: Options): Promise<ResponseType> => {
+  async (api: API_TYPE, options: Options): Promise<ResponseType> => {
     switch (api) {
-      case API_SWAGGER:
+      case API_TYPE.SWAGGER:
         return resolveSwaggerDescriptor(client)(options.uri);
-      case API_GRAPHQL:
+      case API_TYPE.GRAPHQL:
         return resolveGraphqlDescriptor(client)(options);
       default:
         throw new Error(`Invalid api type '${api}' provided. Type must be one of: ${API_OPTS.join(', ')}`)

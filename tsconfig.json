@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "declaration": true,
+        "module": "commonjs",
+        "outDir": "dist",
+        "resolveJsonModule": true,
+        "target": "esnext"
+    },
+    "files": ["src/index.ts"]
+}

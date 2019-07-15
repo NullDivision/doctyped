@@ -2068,15 +2068,15 @@ find-up@^4.0.0, find-up@^4.1.0:
     locate-path "^5.0.0"
     path-exists "^4.0.0"
 
-flow-bin@^0.90.0:
-  version "0.90.0"
-  resolved "https://registry.yarnpkg.com/flow-bin/-/flow-bin-0.90.0.tgz#733b6d29a8c8a22b9a5d273611d9a8402faf3445"
-  integrity sha512-/syDchjhLLL7nELK1ggyWJifGXuMCTz74kvkjR1t9DcmasMrilLl9qAAotsACcNb98etEEJpsCrvP7WL64kadw==
+flow-bin@^0.102.0:
+  version "0.102.0"
+  resolved "https://registry.yarnpkg.com/flow-bin/-/flow-bin-0.102.0.tgz#3d5de44bcc26d26585e932b3201988b766f9b380"
+  integrity sha512-mYon6noeLO0Q5SbiWULLQeM1L96iuXnRtYMd47j3bEWXAwUW9EnwNWcn+cZg/jC/Dg4Wj/jnkdTDEuFtbeu1ww==
 
-flow-parser@^0.90.0:
-  version "0.90.0"
-  resolved "https://registry.yarnpkg.com/flow-parser/-/flow-parser-0.90.0.tgz#27f2f563dc4296bf0c555183bbf48cb6135b1b21"
-  integrity sha512-a6Ohgdzvf2e1/F8sI98qcPLtDIjLayRkRgAwrWHzHFMHCNq92jyRbRG0w5fGjs6xdI320Ud39HkI0Dk5OPs17g==
+flow-parser@^0.102.0:
+  version "0.102.0"
+  resolved "https://registry.yarnpkg.com/flow-parser/-/flow-parser-0.102.0.tgz#5b42d36759d50bd73509b2a2fc8b5a00162a03c1"
+  integrity sha512-lePuMLr6QXv3AwTCl/pnh55YIzHNHHNPl0FW0wuug+tJKSN2UoWFCriANsYNax0Bm0GivHUGQPPQ/GmGgEXbSA==
 
 for-in@^1.0.2:
   version "1.0.2"

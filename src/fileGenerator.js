@@ -17,7 +17,8 @@ const getAccumulatedExtras = (properties) =>
       const [name, value] = currentValue;
 
       if (!(value instanceof Object)) return acc;
-      
+
+      // $FlowFixMe
       const { exportTypes: newExport, importTypes: newImport, ...rest } = value;
       const result = {
         exportTypes: newExport ? [...accExports, { name: name[0].toUpperCase() + name.slice(1), type: newExport }]
@@ -32,10 +33,11 @@ const getAccumulatedExtras = (properties) =>
 
 export default (format: typeof FORMAT_FLOW | typeof FORMAT_TS, output: string, schema: Schema | mixed) => {
   if (!Array.isArray(schema)) return;
-  
-  return schema.forEach((descriptor: SchemaValue | mixed) => {
+
+  return schema.forEach((descriptor: mixed) => {
     if (!(descriptor instanceof Object)) return;
-    
+
+    // $FlowFixMe
     const { name, properties } = descriptor;
     const templateFile = format === FORMAT_TS ? 'typescript' : 'flow';
 

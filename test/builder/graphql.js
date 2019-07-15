@@ -3,7 +3,7 @@ import test from 'ava';
 
 // $FlowFixMe
 import mockData from '../__mocks__/graphql.json';
-import buildGraphql from '../../src/builder/graphql';
+import buildGraphql from '../../dist/builder/graphql';
 
 // example taken from https://fakerql.com/
 test('builds from graphql types', (t) => {

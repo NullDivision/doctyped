@@ -1,19 +1,17 @@
 import test from 'ava';
 import flowParser from 'flow-parser';
-import fs from 'fs';
-import http from 'http';
+import { existsSync, promises as fs } from 'fs';
 import https from 'https';
 import path from 'path';
 import sinon from 'sinon';
 import ts from 'typescript';
 
-// $FlowFixMe
 import descriptor from './__mocks__/swagger.json';
-// $FlowFixMe
-import { API_GRAPHQL, API_SWAGGER } from '../src/constants.json';
-import doctyped from '../src/doctyped';
-import * as reader from '../src/reader';
+import { API_TYPE, doctyped } from '../dist/doctyped';
+import * as reader from '../dist/reader';
+import { FORMAT_TYPE } from '../dist/fileGenerator.js';
 
+const { GRAPHQL: API_GRAPHQL, SWAGGER: API_SWAGGER } = API_TYPE;
 const TEST_PATH_BASE = path.resolve(__dirname, '..', 'tmp');
 const SWAGGER_FILE = path.resolve(__dirname, '__mocks__/swagger.json')
 
@@ -28,111 +26,105 @@ test('generates models', async (t) => {
 });
 
 test('accepts output directory', async (t) => {
-  const TEST_PATH = path.resolve(TEST_PATH_BASE, 'definedPath');
+  try {
+    const TEST_PATH = path.resolve(TEST_PATH_BASE, 'definedPath');
+    const modelNames = Object.keys(descriptor.definitions);
 
-  const modelNames = Object.keys(descriptor.definitions);
+    t.truthy(modelNames.length);
 
-  t.truthy(modelNames.length);
+    modelNames.forEach((model) =>
+      t.falsy(existsSync(`${TEST_PATH}/${model}.js.flow`))
+    );
 
-  modelNames.forEach((model) => t.falsy(fs.existsSync(`${TEST_PATH}/${model}.js.flow`)));
+    await fs.mkdir(TEST_PATH);
+    await doctyped(SWAGGER_FILE, { api: API_SWAGGER, output: TEST_PATH });
 
-  fs.mkdirSync(TEST_PATH);
-  await doctyped(SWAGGER_FILE, { api: API_SWAGGER, output: TEST_PATH });
-
-  modelNames.forEach((model) => t.truthy(fs.existsSync(`${TEST_PATH}/${model}.js.flow`)));
+    modelNames.forEach((model) =>
+      t.truthy(existsSync(`${TEST_PATH}/${model}.js.flow`))
+    );
+  } catch (error) {
+    console.log(error);
+  }
 });
 
-test.cb('generates flow type', (t) => {
+test('generates flow type', async (t) => {
   const TEST_PATH = path.resolve(TEST_PATH_BASE, 'flow');
 
-  fs.mkdirSync(TEST_PATH);
-  doctyped(SWAGGER_FILE, { api: API_SWAGGER, output: TEST_PATH })
-    .then(() => {
-      fs.readFile(`${TEST_PATH}/Order.js.flow`, () => {
-        t.end();
-      })
-    })
-    .catch((err) => t.log(err));
+  await fs.mkdir(TEST_PATH);
+  await doctyped(SWAGGER_FILE, { api: API_SWAGGER, output: TEST_PATH });
+
+  t.truthy(existsSync(`${TEST_PATH}/Order.js.flow`));
 });
 
-test.cb('respects ref imports', (t) => {
+test('respects ref imports', async (t) => {
   const TEST_PATH = path.resolve(TEST_PATH_BASE, 'refTest');
 
-  fs.mkdirSync(TEST_PATH);
-  doctyped(SWAGGER_FILE, { api: API_SWAGGER, output: TEST_PATH }).then(() => {
-    fs.readFile(`${TEST_PATH}/Pet.js.flow`, (err, response) => {
-      const { body } = flowParser.parse(response.toString());
+  await fs.mkdir(TEST_PATH);
+  await doctyped(SWAGGER_FILE, { api: API_SWAGGER, output: TEST_PATH })
 
-      t.is(
-        body
-          .filter(({ type }) => type === 'ExportNamedDeclaration')
-          .find(({ declaration: { id: { name } } }) => name === 'Pet')
-          .declaration
-          .right
-          .properties
-          .find(({ key: { name } }) => name === 'category')
-          .value
-          .typeAnnotation
-          .id
-          .name,
-        'Category'
-      );
-      t.truthy(
-        body
-          .filter(({ type }) => type === 'ImportDeclaration')
-          .find(({ source: { value } }) => value === './Category.js.flow')
-      );
-      t.end();
-    });
-  });
+  const response = await fs.readFile(`${TEST_PATH}/Pet.js.flow`);
+  const { body } = flowParser.parse(response.toString());
+
+  t.is(
+    body
+      .filter(({ type }) => type === 'ExportNamedDeclaration')
+      .find(({ declaration: { id: { name } } }) => name === 'Pet')
+      .declaration
+      .right
+      .properties
+      .find(({ key: { name } }) => name === 'category')
+      .value
+      .typeAnnotation
+      .id
+      .name,
+    'Category'
+  );
+  t.truthy(
+    body
+      .filter(({ type }) => type === 'ImportDeclaration')
+      .find(({ source: { value } }) => value === './Category.js.flow')
+  );
 });
 
-test.cb('resolves array types', (t) => {
+test('resolves array types', async (t) => {
   const TEST_PATH = path.resolve(TEST_PATH_BASE, 'arrayTest');
 
-  fs.mkdirSync(TEST_PATH);
-  doctyped(SWAGGER_FILE, { api: API_SWAGGER, output: TEST_PATH }).then(() => {
-    fs.readFile(`${TEST_PATH}/Pet.js.flow`, (err, response) => {
-      const property = flowParser
-        .parse(response.toString())
-        .body
-        .filter(({ type }) => type === 'ExportNamedDeclaration')
-        .find(({ declaration: { id: { name } } }) => name === 'Pet')
-        .declaration
-        .right
-        .properties
-        .find(({ key: { name } }) => name === 'photoUrls')
-        .value;
+  await fs.mkdir(TEST_PATH);
+  await doctyped(SWAGGER_FILE, { api: API_SWAGGER, output: TEST_PATH });
 
-      t.is(property.id.name, 'Array');
-      t.truthy(property.typeParameters.params.find(({ type }) => type === 'StringTypeAnnotation'));
+  const response = await fs.readFile(`${TEST_PATH}/Pet.js.flow`)
+  const property = flowParser
+    .parse(response.toString())
+    .body
+    .filter(({ type }) => type === 'ExportNamedDeclaration')
+    .find(({ declaration: { id: { name } } }) => name === 'Pet')
+    .declaration
+    .right
+    .properties
+    .find(({ key: { name } }) => name === 'photoUrls')
+    .value;
 
-      t.end();
-    });
-  })
+  t.is(property.id.name, 'Array');
+  t.truthy(property.typeParameters.params.find(({ type }) => type === 'StringTypeAnnotation'));
 });
 
-test.cb('resolves number types', (t) => {
+test('resolves number types', async (t) => {
   const TEST_PATH = path.resolve(TEST_PATH_BASE, 'numberTest');
 
-  fs.mkdirSync(TEST_PATH);
-  doctyped(SWAGGER_FILE, { api: API_SWAGGER, output: TEST_PATH }).then(() => {
-    fs.readFile(`${TEST_PATH}/Order.js.flow`, (err, response) => {
-      const { declaration: { right: { properties } } } = flowParser
-        .parse(response.toString())
-        .body
-        .filter(({ type }) => type === 'ExportNamedDeclaration')
-        .find(({ declaration: { id: { name } } }) => name === 'Order')
+  await fs.mkdir(TEST_PATH);
+  await doctyped(SWAGGER_FILE, { api: API_SWAGGER, output: TEST_PATH });
+  const response = await fs.readFile(`${TEST_PATH}/Order.js.flow`);
+  const { declaration: { right: { properties } } } = flowParser
+    .parse(response.toString())
+    .body
+    .filter(({ type }) => type === 'ExportNamedDeclaration')
+    .find(({ declaration: { id: { name } } }) => name === 'Order')
 
-      t.is(properties.find(({ key: { name } }) => name === 'petId').value.typeAnnotation.type, 'NumberTypeAnnotation');
-      t.is(
-        properties.find(({ key: { name } }) => name === 'quantity').value.typeAnnotation.type,
-        'NumberTypeAnnotation'
-      );
-
-      t.end();
-    });
-  });
+  t.is(properties.find(({ key: { name } }) => name === 'petId').value.typeAnnotation.type, 'NumberTypeAnnotation');
+  t.is(
+    properties.find(({ key: { name } }) => name === 'quantity').value.typeAnnotation.type,
+    'NumberTypeAnnotation'
+  );
 });
 
 test('resolves path from url', async (t) => {
@@ -143,70 +135,48 @@ test('resolves path from url', async (t) => {
   t.truthy(response);
 });
 
-test.cb('generates typescript files', (t) => {
+test('generates typescript files', async (t) => {
   const TEST_PATH = path.join(TEST_PATH_BASE, 'ts');
 
-  fs.mkdirSync(TEST_PATH);
-  doctyped(SWAGGER_FILE, { api: API_SWAGGER, format: 'ts', output: TEST_PATH }).then(() => {
-    fs.readdir(TEST_PATH, (err, response) => {
-      Object.keys(descriptor.definitions).forEach((modelName) => t.truthy(response.includes(`${modelName}.d.ts`)));
+  await fs.mkdir(TEST_PATH);
+  await doctyped(
+    SWAGGER_FILE,
+    { api: API_SWAGGER, format: FORMAT_TYPE.TS, output: TEST_PATH }
+  )
 
-      t.end();
-    });
-  });
+  const response = await fs.readdir(TEST_PATH);
+
+  Object
+    .keys(descriptor.definitions)
+    .forEach((modelName) => t.truthy(response.includes(`${modelName}.d.ts`)));
 });
 
-test.cb('builds valid ts interface', (t) => {
+test('builds valid ts interface', async (t) => {
   const TEST_PATH = path.join(TEST_PATH_BASE, 'tsInterface');
 
-  fs.mkdirSync(TEST_PATH);
-  doctyped(SWAGGER_FILE, { api: API_SWAGGER, format: 'ts', output: TEST_PATH }).then(() => {
-    const TEST_FILE = path.join(TEST_PATH, 'Pet.d.ts');
+  await fs.mkdir(TEST_PATH);
+  await doctyped(
+    SWAGGER_FILE,
+    { api: API_SWAGGER, format: FORMAT_TYPE.TS, output: TEST_PATH }
+  );
 
-    fs.readFile(TEST_FILE, (err, result) => {
-      const { statements } = ts.createSourceFile(TEST_FILE, result.toString(), ts.ScriptTarget.ES6, false);
-      const [CategoryImport, TagImport] = statements;
-      t.is(CategoryImport.moduleSpecifier.text, './Category.ts');
-      t.is(TagImport.moduleSpecifier.text, './Tag.ts');
-      t.end();
-    });
-  });
+  const TEST_FILE = path.join(TEST_PATH, 'Pet.d.ts');
+
+  const result = await fs.readFile(TEST_FILE);
+  const { statements } = ts.createSourceFile(TEST_FILE, result.toString(), ts.ScriptTarget.ES6, false);
+  const [CategoryImport, TagImport] = statements;
+  t.is(CategoryImport.moduleSpecifier.text, './Category.ts');
+  t.is(TagImport.moduleSpecifier.text, './Tag.ts');
 });
 
-test.cb('dedups imports from same files', (t) => {
+test('dedups imports from same files', async (t) => {
   const TEST_PATH = path.join(TEST_PATH_BASE, 'dedup');
 
-  fs.mkdirSync(TEST_PATH);
-  doctyped(SWAGGER_FILE, { api: API_SWAGGER, output: TEST_PATH }).then(() => {
-    const TEST_FILE = path.join(TEST_PATH, 'Pet.js.flow');
+  await fs.mkdir(TEST_PATH);
+  await doctyped(SWAGGER_FILE, { api: API_SWAGGER, output: TEST_PATH });
 
-    fs.readFile(TEST_FILE, 'utf8', (err, result) => {
-      t.is(result.match(/Category.js/g).length, 1);
-      t.end();
-    });
-  });
-});
+  const TEST_FILE = path.join(TEST_PATH, 'Pet.js.flow');
 
-test.cb('sets authorization token', (t) => {
-  const TEST_AUTH = 'test auth';
-
-  try {
-    sinon.stub(reader, 'getDescriptorResolver').callsFake(() => (api, opts) => {
-      try {
-        t.truthy(opts.hasOwnProperty('headers'));
-        t.truthy(opts.headers.hasOwnProperty('Authorization'));
-        t.end();
-
-        return { types: [] };
-      } catch (e) {
-        console.log(e);
-      }
-    });
-  } catch (e) {
-    console.log(e);
-  }
-
-  doctyped('http://test-url', { api: API_GRAPHQL, authorization: TEST_AUTH }).catch((err) => {
-    console.log(err);
-  });
+  const result = await fs.readFile(TEST_FILE, 'utf8');
+  t.is(result.match(/Category.js/g).length, 1);
 });

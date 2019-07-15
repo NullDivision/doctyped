@@ -2,8 +2,8 @@ import test from 'ava';
 import request from 'request-promise-native';
 import sinon from 'sinon';
 
-import { API_GRAPHQL } from '../src/constants.json';
-import { getDescriptorResolver } from '../src/reader';
+import { API_TYPE } from '../dist/builder';
+import { getDescriptorResolver } from '../dist/reader';
 
 const mockRequest = sinon.stub(request, 'Request');
 
@@ -30,7 +30,7 @@ test.cb('resolves graphql requests', (t) => {
         setEncoding: () => {}
       });
     }
-  })(API_GRAPHQL, { uri: TEST_URL }).then((result) => {
+  })(API_TYPE.GRAPHQL, { uri: TEST_URL }).then((result) => {
     t.deepEqual(result, TEST_DATA.data.__schema);
     t.end();
   });
@@ -51,7 +51,7 @@ test.cb('notifies about error messages', (t) => {
 
       return { end: () => null, write: () => null };
     }
-  })(API_GRAPHQL).catch((err) => {
+  })(API_TYPE.GRAPHQL).catch((err) => {
     t.is(err.message, TEST_STATUS);
     t.end();
   });

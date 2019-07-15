@@ -1,7 +1,7 @@
 // @flow
 import test from 'ava';
 
-import buildSwagger from '../../src/builder/swagger';
+import buildSwagger from '../../dist/builder/swagger';
 
 test('handles additional properties', (t) => {
   const TEST_DATA = {

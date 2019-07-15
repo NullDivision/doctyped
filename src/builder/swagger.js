@@ -51,15 +51,18 @@ const doPropertyTransform = (required) =>
   };
 
 const mapSwaggerTypes = (name, value): SchemaValue => {
+  // $FlowFixMe
   const { additionalProperties, properties, required }: DescriptorValue = value;
   const getProperty = doPropertyTransform(required);
+  // $FlowFixMe
   const propertyEntries = Object.entries(properties);
   const mergedProperties = additionalProperties ? [...propertyEntries, ['[string]', additionalProperties]]
                                                 : propertyEntries;
 
   const resolvedProperties = mergedProperties.reduce((acc, [propName, prop]) => {
     if (!(prop instanceof Object)) return acc;
-    
+
+    // $FlowFixMe
     return { ...acc, [propName]: getProperty(propName, prop) };
   }, {});
 

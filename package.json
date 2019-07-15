@@ -16,7 +16,7 @@
   },
   "scripts": {
     "build:clear": "rm -rfv ./dist/*",
-    "build:copy": "cp -R ./src/templates ./dist/templates",
+    "build:copy": "mkdir -p ./dist/templates && cp -r ./src/templates ./dist",
     "build": "npm run build:clear && npm run build:copy && tsc",
     "pretest": "rm -rf ./tmp/* && npm run build",
     "test": "ava"

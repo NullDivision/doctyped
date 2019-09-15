@@ -19,7 +19,7 @@
     "build:copy": "mkdirp ./dist/templates && copyfiles ./src/templates ./dist",
     "build": "npm run build:clear && npm run build:copy && tsc",
     "lint": "eslint ./src/**/*.{js,ts} ./test/**/*.{js,ts}",
-    "pretest": "rimraf -rf ./tmp/* && npm run build",
+    "pretest": "rimraf -rf ./tmp/*",
     "test": "jest"
   },
   "repository": {

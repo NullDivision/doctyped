@@ -111,6 +111,8 @@ const resolveGraphqlDescriptor = () => async (
     } = await request({ ...opts, ...options });
     return __schema;
   } catch (err) {
+    logger(err.stack);
+
     throw new Error(err.message);
   }
 };

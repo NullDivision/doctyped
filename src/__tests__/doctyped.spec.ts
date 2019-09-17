@@ -9,9 +9,9 @@ jest.mock('../fileGenerator');
 
 const { SWAGGER: API_SWAGGER } = API_TYPE;
 const TEST_PATH_BASE = resolve(__dirname, '../..', 'tmp');
-const SWAGGER_FILE = resolve(__dirname, '__mocks__/swagger.json');
+const SWAGGER_FILE = resolve(__dirname, '__data__/swagger.json');
 const MODEL_NAMES = Object.keys(
-  require('./__mocks__/swagger.json').definitions
+  require('./__data__/swagger.json').definitions
 );
 
 describe('doctyped', () => {

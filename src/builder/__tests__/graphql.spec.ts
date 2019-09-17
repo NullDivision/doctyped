@@ -1,7 +1,7 @@
-import buildGraphql from '../../../dist/builder/graphql';
+import buildGraphql from '../graphql';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const mockData = require('./__mocks__/graphql.json');
+const mockData = require('./__data__/graphql.json');
 
 // example taken from https://fakerql.com/
 describe('graphql', () => {

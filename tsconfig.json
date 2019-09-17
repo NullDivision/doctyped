@@ -6,5 +6,6 @@
         "resolveJsonModule": true,
         "target": "esnext"
     },
-    "files": ["src/index.ts"]
+    "files": ["src/index.ts"],
+    "exclude": ["tmp"]
 }

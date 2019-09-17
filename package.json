@@ -15,11 +15,12 @@
     "test": "test"
   },
   "scripts": {
-    "build:clear": "rm -rfv ./dist/*",
-    "build:copy": "mkdir -p ./dist/templates && cp -r ./src/templates ./dist",
+    "build:clear": "rimraf -rfv ./dist/*",
+    "build:copy": "mkdirp ./dist/templates && copyfiles ./src/templates ./dist",
     "build": "npm run build:clear && npm run build:copy && tsc",
-    "pretest": "rm -rf ./tmp/* && npm run build",
-    "test": "ava"
+    "lint": "eslint ./src/**/*.{js,ts} ./test/**/*.{js,ts}",
+    "pretest": "rimraf -rf ./tmp/*",
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -43,18 +44,25 @@
     "yargs": "^13.2.4"
   },
   "devDependencies": {
-    "@babel/cli": "^7.2.3",
-    "@babel/core": "^7.2.2",
-    "@babel/preset-env": "^7.2.3",
-    "@babel/preset-flow": "^7.0.0",
-    "@babel/register": "^7.0.0",
     "@types/ejs": "^2.6.3",
+    "@types/jest": "^24.0.15",
     "@types/request-promise-native": "^1.0.16",
     "@types/yargs": "^13.0.0",
-    "ava": "^2.2.0",
-    "flow-bin": "^0.102.0",
-    "flow-parser": "^0.102.0",
-    "sinon": "^7.1.1",
+    "@typescript-eslint/eslint-plugin": "^1.13.0",
+    "@typescript-eslint/parser": "^1.13.0",
+    "copyfiles": "^2.1.1",
+    "eslint": "^6.1.0",
+    "flow-bin": "^0.104.0",
+    "flow-parser": "^0.104.0",
+    "jest": "^24.8.0",
+    "mkdirp": "^0.5.1",
+    "rimraf": "^2.6.3",
+    "ts-jest": "^24.0.2",
     "typescript": "^3.1.6"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "watchPathIgnorePatterns": ["./tmp"]
   }
 }

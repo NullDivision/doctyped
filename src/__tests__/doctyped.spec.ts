@@ -1,10 +1,4 @@
-// import test from 'ava';
-import { parse } from 'flow-parser';
-import { existsSync, promises as fs } from 'fs';
-// import https from 'https';
 import { join, resolve } from 'path';
-// import sinon from 'sinon';
-import { createSourceFile, ScriptTarget } from 'typescript';
 
 import { API_TYPE, doctyped } from '../doctyped';
 // import * as reader from '../dist/reader';
@@ -13,7 +7,7 @@ import { FORMAT_TYPE } from '../fileGenerator';
 jest.mock('https');
 jest.mock('../fileGenerator');
 
-const { GRAPHQL: API_GRAPHQL, SWAGGER: API_SWAGGER } = API_TYPE;
+const { SWAGGER: API_SWAGGER } = API_TYPE;
 const TEST_PATH_BASE = resolve(__dirname, '../..', 'tmp');
 const SWAGGER_FILE = resolve(__dirname, '__mocks__/swagger.json');
 const MODEL_NAMES = Object.keys(

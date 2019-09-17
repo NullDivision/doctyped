@@ -1,10 +1,6 @@
-// import test from 'ava';
-// import request from 'request-promise-native';
-// import sinon from 'sinon';
 import { API_TYPE } from '../builder';
 import { getDescriptorResolver } from '../reader';
 
-// const mockRequest = sinon.stub(request, 'Request');
 jest.mock('http');
 jest.mock('request-promise-native');
 

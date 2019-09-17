@@ -1,5 +1,5 @@
 import { renderFile } from 'ejs';
-import { writeFile } from 'fs';
+import { promises as fs } from 'fs';
 import { resolve } from 'path';
 
 import { Schema, SchemaValue, SchemaValueProperties } from './builder';
@@ -27,31 +27,41 @@ const getAccumulatedExtras = (properties: SchemaValueProperties) =>
     { exportTypes: [], importTypes: [] }
   );
 
-export function generateFile(
+export async function generateFile(
   format: FORMAT_TYPE,
   output: string,
   schema: Schema
-) {
-  return schema.forEach((descriptor: SchemaValue) => {
+): Promise<void> {
+  const requests = schema.map((descriptor: SchemaValue): Promise<void> => {
     if (!(descriptor instanceof Object)) return;
 
     const { name, properties } = descriptor;
     const templateFile = format === FORMAT_TYPE.TS ? 'typescript' : 'flow';
 
-    return renderFile(
-      resolve(__dirname, `templates/${templateFile}.ejs`),
-      { name, properties, ...getAccumulatedExtras(properties) },
-      (err, result) => {
-        if (err) {
-          logger(err);
-        }
+    return new Promise((promiseResolve, promiseReject): void => {
+      renderFile(
+        resolve(__dirname, `templates/${templateFile}.ejs`),
+        { name, properties, ...getAccumulatedExtras(properties) },
+        async (err, result): Promise<void> => {
+          if (err) {
+            logger(err);
+          }
 
-        writeFile(
-          `${output}/${name}.${format === FORMAT_TYPE.TS ? 'd.ts' : 'js.flow'}`,
-          result,
-          (err) => { err && logger(err); }
-        );
-      }
-    );
+          try {
+            await fs.writeFile(
+              `${output}/${name}.${format === FORMAT_TYPE.TS ? 'd.ts' : 'js.flow'}`,
+              result
+            );
+          } catch (error) {
+            promiseReject(error);
+            return;
+          }
+
+          promiseResolve();
+        }
+      );
+    });
   });
-};
+
+  await Promise.all(requests);
+}

@@ -10,10 +10,10 @@ interface SwaggerProperty {
 
 const doPropertyTransform = (required) =>
   (name, { $ref, enum: optsList, items, type }: SwaggerProperty) => {
+    const ucName = `${name[0].toUpperCase()}${name.substr(1)}`;
     let parsedType = '*';
     let exportType;
     let importType;
-    let ucName = `${name[0].toUpperCase()}${name.substr(1)}`;
 
     switch (type) {
       case 'integer':
@@ -52,17 +52,24 @@ const doPropertyTransform = (required) =>
     };
   };
 
+const mergeProperties = (propertyEntries, additionalProperties) => {
+  if (additionalProperties) return [...propertyEntries, ['[string]', additionalProperties]];
+
+  return propertyEntries;
+};
+
 const mapSwaggerTypes = (name, value: DescriptorValue): SchemaValue => {
   const { additionalProperties, properties, required } = value;
   const getProperty = doPropertyTransform(required);
   const propertyEntries = Object.entries(properties);
-  const mergedProperties = additionalProperties ? [...propertyEntries, ['[string]', additionalProperties]]
-                                                : propertyEntries;
+  const mergedProperties = mergeProperties(
+    propertyEntries,
+    additionalProperties
+  );
 
   const resolvedProperties = mergedProperties.reduce((acc, [propName, prop]) => {
     if (!(prop instanceof Object)) return acc;
 
-    // @ts-ignore
     return { ...acc, [propName]: getProperty(propName, prop) };
   }, {});
 
@@ -73,8 +80,8 @@ export default (definitions: Descriptor['definitions']): Schema => {
   const definitionEntries = Object.entries(definitions);
 
   return definitionEntries.map(([name, value]) => {
-      if (!(value instanceof Object)) return { name: '', properties: {} };
+    if (!(value instanceof Object)) return { name: '', properties: {} };
 
-      return mapSwaggerTypes(name, value);
-    });
+    return mapSwaggerTypes(name, value);
+  });
 };

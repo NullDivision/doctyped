@@ -20,12 +20,9 @@ const resolveType = ({ kind, name, ofType }): string => {
   if (kind === EXTERNAL_TYPE) return name;
   if (ofType && kind === ARRAY_TYPE) return `Array<${resolveType(ofType)}>`;
   if (ofType && kind === REQUIRED_TYPE) return resolveType(ofType);
+  if (['String', 'ID'].includes(name)) return 'string';
 
-  return ['String', 'ID'].includes(name)
-    ? 'string'
-    : name === 'Boolean'
-    ? 'boolean'
-    : name;
+  return name === 'Boolean' ? 'boolean' : name;
 };
 
 const mapProperties = (fields): SchemaValueProperties =>

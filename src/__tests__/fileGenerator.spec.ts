@@ -1,7 +1,6 @@
 import { parse } from 'flow-parser';
 import { promises as fs } from 'fs';
 import { join, resolve } from 'path';
-import { ScriptTarget, createSourceFile } from 'typescript';
 import { generateFile, FORMAT_TYPE } from '../fileGenerator';
 
 const TEST_PATH_BASE = resolve(__dirname, '../../tmp');

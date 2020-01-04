@@ -1,4 +1,5 @@
-import { parse } from 'flow-parser';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { parse } = require('flow-parser');
 import { promises as fs } from 'fs';
 import { join, resolve } from 'path';
 import { generateFile, FORMAT_TYPE } from '../fileGenerator';
@@ -116,13 +117,13 @@ describe('fileGenerator', () => {
         right: { properties }
       }
     } = parse(response.toString())
-      .body.filter(({ type }) => type === 'ExportNamedDeclaration')
+      .body.filter(({ type }: any) => type === 'ExportNamedDeclaration')
       .find(
         ({
           declaration: {
             id: { name }
           }
-        }) => name === 'Order'
+        }: any) => name === 'Order'
       );
 
     expect(properties).toEqual(

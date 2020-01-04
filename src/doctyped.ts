@@ -11,12 +11,13 @@ interface Options {
   api: API_TYPE;
   authorization?: string;
   format?: FORMAT_TYPE;
-  output?: string
-};
+  output?: string;
+}
 
 const DEFAULT_OPTS = { format: FORMAT_TYPE.FLOW, output: null };
 
-const getClient = (url) => url.startsWith('https') ? https : http;
+const getClient = (url: string): typeof http | typeof https =>
+  url.startsWith('https') ? https : http;
 
 export async function doctyped (
   url: string,
@@ -27,6 +28,10 @@ export async function doctyped (
 
   const describe = getDescriptorResolver(getClient(url));
   const definitions = await describe(api, { headers, uri: url });
+
+  if (!definitions) throw new Error('Could not get definitions');
+  
+  // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
   // @ts-ignore
   const schema = build(api)(definitions);
 
@@ -35,4 +40,4 @@ export async function doctyped (
   }
 
   return schema;
-};
+}

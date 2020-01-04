@@ -4,6 +4,7 @@
         "module": "commonjs",
         "outDir": "dist",
         "resolveJsonModule": true,
+        "strict": true,
         "target": "esnext"
     },
     "files": ["src/index.ts"],

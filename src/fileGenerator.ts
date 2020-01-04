@@ -10,21 +10,31 @@ export enum FORMAT_TYPE {
   TS = 'ts'
 }
 
-const getAccumulatedExtras = (properties: SchemaValueProperties) =>
-  Object.entries(properties).reduce((acc, currentValue) => {
+interface AccumulatedExtras {
+  exportTypes: Array<{ name: string; type: string }>;
+  importTypes: Array<string>;
+}
+
+const getAccumulatedExtras = (
+  properties: SchemaValueProperties
+): AccumulatedExtras =>
+  Object.entries(properties).reduce(
+    (acc, currentValue) => {
       const { exportTypes: accExports, importTypes: accImports } = acc;
       const [name, value] = currentValue;
-
       const { exportTypes: newExport, importTypes: newImport } = value;
-      const result = {
-        exportTypes: newExport ? [...accExports, { name: name[0].toUpperCase() + name.slice(1), type: newExport }]
-                               : accExports,
-        importTypes: newImport && !accImports.includes(newImport) ? [...accImports, newImport] : accImports
-      };
 
-      return result;
+      return {
+        exportTypes: newExport
+          ? [...accExports, { name: name[0].toUpperCase() + name.slice(1), type: newExport }]
+          : accExports,
+        importTypes:
+          newImport && !accImports.includes(newImport)
+            ? [...accImports, newImport]
+            : accImports
+      };
     },
-    { exportTypes: [], importTypes: [] }
+    { exportTypes: [], importTypes: [] } as AccumulatedExtras
   );
 
 export async function generateFile(
@@ -32,7 +42,7 @@ export async function generateFile(
   output: string,
   schema: Schema
 ): Promise<void> {
-  const requests = schema.map((descriptor: SchemaValue): Promise<void> => {
+  const requests = schema.map((descriptor: SchemaValue): Promise<void> | void => {
     if (!(descriptor instanceof Object)) return;
 
     const { name, properties } = descriptor;

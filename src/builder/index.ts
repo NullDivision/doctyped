@@ -12,7 +12,7 @@ interface PropertyValue {
   required: boolean;
   type: string;
 }
-export interface SchemaValueProperties { [key: string]: PropertyValue };
+export interface SchemaValueProperties { [key: string]: PropertyValue }
 export interface SchemaValue {
   name: string;
   properties: SchemaValueProperties;
@@ -33,4 +33,4 @@ export function build(api: API_TYPE) {
       Object.values(API_TYPE).join(', ')
     }`
   );
-};
+}

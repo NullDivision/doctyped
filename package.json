@@ -41,7 +41,7 @@
     "ejs": "^3.0.1",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.5",
-    "yargs": "^13.2.4"
+    "yargs": "^15.1.0"
   },
   "devDependencies": {
     "@types/ejs": "^3.0.0",
@@ -66,5 +66,9 @@
     "watchPathIgnorePatterns": [
       "./tmp"
     ]
-  }
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "engineStrict": true
 }

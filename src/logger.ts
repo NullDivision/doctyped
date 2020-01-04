@@ -1,3 +1,10 @@
-const getLogger = (allow) => (...content) => allow && console.log(...content);
+const getLogger = (allow: boolean) => (
+  ...content: Parameters<Console['log']>
+): ReturnType<Console['log']> => {
+  if (allow) console.log(...content);
+};
 
-export default getLogger(['development', 'test'].includes(process.env.NODE_ENV));
+export default getLogger(
+  !!process.env.NODE_ENV &&
+    ['development', 'test'].includes(process.env.NODE_ENV)
+);

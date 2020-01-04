@@ -20,7 +20,7 @@ export interface DescriptorValue {
 export interface Descriptor {
   definitions: { [key: string]: DescriptorValue };
 }
-interface GraphQlResponseFieldType {
+export interface GraphQlResponseFieldType {
   kind: string;
   name: string;
   ofType?: GraphQlResponseFieldType;

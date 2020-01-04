@@ -33,12 +33,14 @@ describe('doctyped', () => {
   });
 
   test('resolves path from url', async () => {
-    jest.requireMock('https').get.mockImplementationOnce((url, callback) =>
-      callback({
-        on: (event, cb) =>
-          event === 'data' ? cb('{ "definitions": {} }') : cb()
-      })
-    );
+    jest
+      .requireMock('https')
+      .get.mockImplementationOnce((url: any, callback: any) =>
+        callback({
+          on: (event: any, cb: any) =>
+            event === 'data' ? cb('{ "definitions": {} }') : cb()
+        })
+      );
 
     const response = await doctyped('https://localhost:12000/api', {
       api: API_SWAGGER

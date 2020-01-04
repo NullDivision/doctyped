@@ -36,7 +36,9 @@ export interface GraphQlResponse {
 
 const API_OPTS = Object.values(API_TYPE);
 
-async function getLocalDescriptor(url) {
+async function getLocalDescriptor(
+  url: Parameters<typeof fs['readFile']>['0']
+): Promise<unknown> {
   try {
     const data = await fs.readFile(url);
 
@@ -51,7 +53,9 @@ async function getLocalDescriptor(url) {
   }
 }
 
-const getRemoteDescriptor = (client: typeof http | typeof https) => (url) =>
+const getRemoteDescriptor = (client: typeof http | typeof https) => (
+  url: Parameters<typeof client['get']>['0']
+): Promise<unknown> =>
   new Promise((resolve) => {
     client.get(url, (response) => {
       let rawData = '';
@@ -68,13 +72,15 @@ interface DescriptorResponse {
   definitions: Descriptor;
 }
 
-function isDescriptor(descriptor): descriptor is DescriptorResponse {
-  return 'definitions' in descriptor;
+function isDescriptor(descriptor: unknown): descriptor is DescriptorResponse {
+  return descriptor instanceof Object && 'definitions' in descriptor;
 }
 
-const resolveSwaggerDescriptor = (client) => async (
-  url
-): Promise<Descriptor> => {
+const resolveSwaggerDescriptor = (
+  client: Parameters<typeof getRemoteDescriptor>['0']
+) => async (
+  url: Parameters<typeof getLocalDescriptor>['0'] & Parameters<ReturnType<typeof getRemoteDescriptor>>['0']
+): Promise<Descriptor | undefined> => {
   try {
     const descriptor = await getLocalDescriptor(url);
 
@@ -92,7 +98,7 @@ const resolveSwaggerDescriptor = (client) => async (
 };
 
 const resolveGraphqlDescriptor = () => async (
-  options
+  options: Parameters<typeof request>['0']
 ): Promise<GraphQlResponse> => {
   const opts = {
     body: {
@@ -121,7 +127,7 @@ interface Options {
   headers?: {};
   uri: string;
 }
-export type ResponseType = Descriptor | GraphQlResponse;
+export type ResponseType = Descriptor | GraphQlResponse | undefined;
 
 export const getDescriptorResolver = (
   client: typeof http | typeof https

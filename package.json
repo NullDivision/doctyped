@@ -38,13 +38,13 @@
   },
   "homepage": "https://github.com/NullDivision/doctyped#readme",
   "dependencies": {
-    "ejs": "^2.5.8",
+    "ejs": "^3.0.1",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.5",
     "yargs": "^13.2.4"
   },
   "devDependencies": {
-    "@types/ejs": "^2.6.3",
+    "@types/ejs": "^3.0.0",
     "@types/jest": "^24.0.15",
     "@types/request-promise-native": "^1.0.16",
     "@types/yargs": "^13.0.0",

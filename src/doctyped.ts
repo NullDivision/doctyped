@@ -3,7 +3,7 @@ import * as https from 'https';
 
 import { API_TYPE, Schema, build } from './builder';
 import { FORMAT_TYPE, generateFile } from './fileGenerator';
-import { getDescriptorResolver } from './reader';
+import { API_TYPE, getDescriptorResolver } from './reader';
 
 export { API_TYPE } from './builder';
 
@@ -19,10 +19,12 @@ const DEFAULT_OPTS = { format: FORMAT_TYPE.FLOW, output: null };
 const getClient = (url: string): typeof http | typeof https =>
   url.startsWith('https') ? https : http;
 
+interface Descriptor { name: string }
+
 export async function doctyped (
   url: string,
   options: Options
-): Promise<Schema> {
+): Promise<Descriptor[]> {
   const { api, authorization, format, output } = { ...DEFAULT_OPTS, ...options };
   const headers = authorization ? { Authorization: authorization } : {};
 

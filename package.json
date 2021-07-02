@@ -15,11 +15,11 @@
     "test": "test"
   },
   "scripts": {
-    "build:clear": "rimraf -rfv ./dist/*",
+    "build:clear": "rm -rf ./dist/*",
     "build:copy": "mkdirp ./dist/templates && copyfiles ./src/templates ./dist",
     "build": "npm run build:clear && npm run build:copy && tsc",
     "lint": "eslint ./src/**/*.ts",
-    "pretest": "rimraf -rf ./tmp/*",
+    "pretest": "rm -rf ./tmp/*",
     "test": "jest"
   },
   "repository": {
@@ -56,7 +56,6 @@
     "flow-parser": "^0.115.0",
     "jest": "^24.8.0",
     "mkdirp": "^0.5.1",
-    "rimraf": "^3.0.0",
     "ts-jest": "^24.0.2",
     "typescript": "^3.1.6"
   },

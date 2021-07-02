@@ -19,7 +19,7 @@ export interface SchemaValue {
 }
 export type Schema = ReadonlyArray<SchemaValue>;
 
-export function build(api: API_TYPE) {
+export function build(api: API_TYPE): typeof buildGraphql | typeof buildSwagger {
   if (api === API_TYPE.GRAPHQL) {
     return buildGraphql;
   }

@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import * as http from 'http';
 import * as https from 'https';
-import { post as request } from 'request-promise-native';
+import got from 'got';
 
 import { API_TYPE } from './builder';
 import logger from './logger';
@@ -98,23 +98,25 @@ const resolveSwaggerDescriptor = (
 };
 
 const resolveGraphqlDescriptor = () => async (
-  options: Parameters<typeof request>['0']
+  url: string,
+  headers?: { Authorization?: string }
 ): Promise<GraphQlResponse> => {
-  const opts = {
-    body: {
-      query:
-        'query IntrospectionQuery {\n  __schema {\n    queryType {\n      name\n    }\n    mutationType {\n      name\n    }\n    subscriptionType {\n      name\n    }\n    types {\n      ...FullType\n    }\n    directives {\n      name\n      locations\n      args {\n        ...InputValue\n      }\n    }\n  }\n}\n\nfragment FullType on __Type {\n  kind\n  name\n  fields {\n    name\n    args {\n      ...InputValue\n    }\n    type {\n      ...TypeRef\n    }\n  }\n  inputFields {\n    ...InputValue\n  }\n  interfaces {\n    ...TypeRef\n  }\n  enumValues {\n    name\n  }\n  possibleTypes {\n    ...TypeRef\n  }\n}\n\nfragment InputValue on __InputValue {\n  name\n  type {\n    ...TypeRef\n  }\n  defaultValue\n}\n\nfragment TypeRef on __Type {\n  kind\n  name\n  ofType {\n    kind\n    name\n    ofType {\n      kind\n      name\n      ofType {\n        kind\n        name\n        ofType {\n          kind\n          name\n          ofType {\n            kind\n            name\n            ofType {\n              kind\n              name\n              ofType {\n                kind\n                name\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}',
-      variables: null,
-      operationName: 'IntrospectionQuery'
-    },
-    json: true,
-    rejectUnauthorized: false
-  };
-
   try {
-    const {
-      data: { __schema }
-    } = await request({ ...opts, ...options });
+    const response = await got.post<{ data: { __schema: GraphQlResponse } }>(
+      url,
+      {
+        json: {
+          query:
+            'query IntrospectionQuery {\n  __schema {\n    queryType {\n      name\n    }\n    mutationType {\n      name\n    }\n    subscriptionType {\n      name\n    }\n    types {\n      ...FullType\n    }\n    directives {\n      name\n      locations\n      args {\n        ...InputValue\n      }\n    }\n  }\n}\n\nfragment FullType on __Type {\n  kind\n  name\n  fields {\n    name\n    args {\n      ...InputValue\n    }\n    type {\n      ...TypeRef\n    }\n  }\n  inputFields {\n    ...InputValue\n  }\n  interfaces {\n    ...TypeRef\n  }\n  enumValues {\n    name\n  }\n  possibleTypes {\n    ...TypeRef\n  }\n}\n\nfragment InputValue on __InputValue {\n  name\n  type {\n    ...TypeRef\n  }\n  defaultValue\n}\n\nfragment TypeRef on __Type {\n  kind\n  name\n  ofType {\n    kind\n    name\n    ofType {\n      kind\n      name\n      ofType {\n        kind\n        name\n        ofType {\n          kind\n          name\n          ofType {\n            kind\n            name\n            ofType {\n              kind\n              name\n              ofType {\n                kind\n                name\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}',
+          variables: null,
+          operationName: 'IntrospectionQuery'
+        },
+        headers,
+        responseType: 'json',
+        retry: 0
+      }
+    );
+    const { body: { data: { __schema } } } = response;
     return __schema;
   } catch (err) {
     logger(err.stack);
@@ -124,7 +126,7 @@ const resolveGraphqlDescriptor = () => async (
 };
 
 interface Options {
-  headers?: {};
+  headers?: { Authorization?: string };
   uri: string;
 }
 export type ResponseType = Descriptor | GraphQlResponse | undefined;
@@ -136,7 +138,7 @@ export const getDescriptorResolver = (
     case API_TYPE.SWAGGER:
       return resolveSwaggerDescriptor(client)(options.uri);
     case API_TYPE.GRAPHQL:
-      return resolveGraphqlDescriptor()(options);
+      return resolveGraphqlDescriptor()(options.uri, options.headers);
     default:
       throw new Error(
         `Invalid api type '${api}' provided. Type must be one of: ${API_OPTS.join(

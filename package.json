@@ -15,11 +15,11 @@
     "test": "test"
   },
   "scripts": {
-    "build:clear": "rimraf -rfv ./dist/*",
+    "build:clear": "rm -rf ./dist/*",
     "build:copy": "mkdirp ./dist/templates && copyfiles ./src/templates ./dist",
     "build": "npm run build:clear && npm run build:copy && tsc",
     "lint": "eslint ./src/**/*.ts",
-    "pretest": "rimraf -rf ./tmp/*",
+    "pretest": "rm -rf ./tmp/*",
     "test": "jest"
   },
   "repository": {
@@ -39,26 +39,24 @@
   "homepage": "https://github.com/NullDivision/doctyped#readme",
   "dependencies": {
     "ejs": "^3.0.1",
-    "request": "^2.88.0",
-    "request-promise-native": "^1.0.5",
-    "yargs": "^15.1.0"
+    "got": "^11.8.2",
+    "yargs": "^17.0.1"
   },
   "devDependencies": {
     "@types/ejs": "^3.0.0",
-    "@types/jest": "^24.0.15",
-    "@types/request-promise-native": "^1.0.16",
-    "@types/yargs": "^13.0.0",
-    "@typescript-eslint/eslint-plugin": "^2.14.0",
-    "@typescript-eslint/parser": "^2.14.0",
+    "@types/jest": "^26.0.23",
+    "@types/yargs": "^17.0.0",
+    "@typescript-eslint/eslint-plugin": "^4.28.1",
+    "@typescript-eslint/parser": "^4.28.1",
     "copyfiles": "^2.1.1",
-    "eslint": "^6.1.0",
-    "flow-bin": "^0.115.0",
-    "flow-parser": "^0.115.0",
-    "jest": "^24.8.0",
-    "mkdirp": "^0.5.1",
-    "rimraf": "^3.0.0",
-    "ts-jest": "^24.0.2",
-    "typescript": "^3.1.6"
+    "eslint": "^7.29.0",
+    "flow-bin": "^0.154.0",
+    "flow-parser": "^0.154.0",
+    "jest": "^27.0.6",
+    "mkdirp": "^1.0.4",
+    "nock": "^13.1.0",
+    "ts-jest": "^27.0.3",
+    "typescript": "^3.9.10"
   },
   "jest": {
     "preset": "ts-jest",

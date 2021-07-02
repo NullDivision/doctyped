@@ -94,7 +94,7 @@ const mapSwaggerTypes = (name: string, value: DescriptorValue): SchemaValue => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore
     return { ...acc, [propName]: getProperty(propName, prop) };
-  }, {} as SchemaValue['properties']);
+  }, {});
 
   return { name, properties: resolvedProperties };
 };

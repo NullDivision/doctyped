@@ -57,7 +57,7 @@
     "jest": "^24.8.0",
     "mkdirp": "^0.5.1",
     "ts-jest": "^24.0.2",
-    "typescript": "^3.1.6"
+    "typescript": "^3.9.10"
   },
   "jest": {
     "preset": "ts-jest",

@@ -24,7 +24,7 @@ describe('reader', () => {
     );
 
     expect(result).toEqual(TEST_DATA.data.__schema);
-  }, 10000);
+  });
 
   it('notifies about error messages', async () => {
     expect.assertions(1);

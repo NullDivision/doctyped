@@ -8,5 +8,5 @@
         "target": "esnext"
     },
     "files": ["src/index.ts"],
-    "exclude": ["tmp"]
+    "exclude": ["tmp", "node_modules/@types/istanbul-reports/index.d.ts"]
 }
